@@ -4,7 +4,7 @@
 	*/
 
 #include "common.h"
-#include "gdt_flush.h"
+#include "kernel.h"
 
 static void gdt_set_entry( uint16_t entry_num, uint32_t limit, uint32_t base, uint8_t access_byte, uint8_t gran);
 static void init_gdt();

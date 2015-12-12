@@ -1,4 +1,4 @@
-OBJECTS = loader.o kmain.o write.o io.o descriptor_tables.o gdt_flush.o
+OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o
     CC = gcc
     CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
              -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c

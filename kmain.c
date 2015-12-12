@@ -1,3 +1,4 @@
+#include "common.h"
 
 void fb_clear(void);
 void fb_write_cell(int i, char c);

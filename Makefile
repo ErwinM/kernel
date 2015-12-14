@@ -1,7 +1,7 @@
-OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o
+OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o isr.o common.o irq.o timer.o
     CC = gcc
     CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
-             -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c
+             -nostartfiles -nodefaultlibs -Wall -Wextra -c
     LDFLAGS = -T link.ld -melf_i386
     AS = nasm
     ASFLAGS = -f elf

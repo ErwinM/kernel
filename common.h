@@ -3,8 +3,8 @@
 	* int types copied from stdint.h
 	*/
 
-	#ifndef COMMON_H
-	#define COMMON_H
+#ifndef COMMON_H
+#define COMMON_H
 
 /* this is copied from GNU stdint.h */
 typedef signed char		int8_t;
@@ -30,5 +30,18 @@ typedef unsigned long int		uint64_t;
 __extension__
 typedef unsigned long long int	uint64_t;
 #endif
+
+typedef struct registers
+{
+    uint32_t ds;                  // Data segment selector
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha.
+    uint32_t int_no, err_code;    // Interrupt number and error code (if applicable)
+    uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
+} regs_t;
+
+
+// functions
+void memcpy(uint8_t *dest, uint8_t *src, uint32_t len);
+void memset(uint8_t *dest, uint8_t val, uint32_t len);
 
 #endif

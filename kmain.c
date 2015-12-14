@@ -1,16 +1,19 @@
 #include "common.h"
-
-void fb_clear(void);
-void fb_write_cell(int i, char c);
-void fb_write_b(char b);
-void fb_move_cursor(unsigned short pos);
-void fb_write(char *buf);
-extern short cursor_pos;
+#include "write.h"
+#include "descriptor_tables.h"
 
 void kmain(void)
 {
+
 	//const char *str = "erwin's first kernel";
 	fb_clear();
-	fb_write("Erwin");
-	fb_move_cursor(cursor_pos);
+	fb_write("Setting up Global Descriptor Table...\n");
+	init_gdt();
+	fb_write("Setting up Interrupt Descriptor Table...\n");
+	init_idt();
+	fb_write_dec(12);
+	asm volatile ("int $0x3");
+	asm volatile ("int $0x4");
+	asm volatile("sti");
+	init_timer(50); 
 }

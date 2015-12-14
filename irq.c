@@ -36,7 +36,7 @@ void uninstall_irq_handler(int irq)
 *  an EOI, you won't raise any more IRQs */
 void irq_handler(regs_t r)
 {
-		fb_write("common irq handler triggered..");
+		//fb_write("common irq handler triggered..");
 		/* This is a blank function pointer */
     void (*handler)(regs_t r);
 

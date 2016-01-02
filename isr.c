@@ -14,4 +14,8 @@ void fault_handler(regs_t regs)
    fb_write("recieved interrupt: ");
    fb_write_dec(regs.int_no);
    fb_put_char('\n');
+	 if (regs.int_no == 6 )
+	 {
+	 	//PANIC("WTF!");
+	}
 }

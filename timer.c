@@ -11,9 +11,9 @@ static void timer_callback(regs_t regs)
 {
 	regs_t DUMMY = regs;
 	tick++;
-	fb_write("Tick: ");
-	fb_write_dec(tick);
-	fb_write("\n");
+	//fb_write("Tick: ");
+	//fb_write_dec(tick);
+	//fb_write("\n");
 }
 
 void init_timer(uint32_t frequency)

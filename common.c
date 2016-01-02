@@ -3,9 +3,6 @@
 #include "common.h"
 
 
-// Copy len bytes from src to dest.
-// TODO: implement
-
 // Write len copies of val into dest.
 void memset(uint8_t *dest, uint8_t val, uint32_t len)
 {
@@ -18,4 +15,20 @@ void memcpy(uint16_t *dest, uint16_t *src, uint32_t len)
 	const uint16_t *sp = (const uint16_t *)src;
   uint16_t *dp = (uint16_t *)dest;
   for(; len != 0; len--) *dp++ = *sp++;
+}
+
+extern void panic(const char *message, const char *file, uint32_t line)
+{
+    // We encountered a massive problem and have to stop.
+    asm volatile("cli"); // Disable interrupts.
+
+    fb_write("PANIC(");
+    fb_write(message);
+    fb_write(") at ");
+    fb_write(file);
+    fb_write(":");
+    fb_write_dec(line);
+    fb_write("\n");
+    // Halt by going into an infinite loop.
+    for(;;);
 }

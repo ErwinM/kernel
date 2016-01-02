@@ -108,6 +108,46 @@ void fb_write_dec(uint32_t n)
     fb_write(c2);
 }
 
+void fb_write_hex(uint32_t n)
+{
+    int32_t tmp;
+
+    fb_write("0x");
+
+    char noZeroes = 1;
+
+    int i;
+    for (i = 28; i > 0; i -= 4)
+    {
+        tmp = (n >> i) & 0xF;
+        if (tmp == 0 && noZeroes != 0)
+        {
+            continue;
+        }
+
+        if (tmp >= 0xA)
+        {
+            noZeroes = 0;
+            fb_put_char (tmp-0xA+'a' );
+        }
+        else
+        {
+            noZeroes = 0;
+            fb_put_char ( tmp+'0' );
+        }
+    }
+
+    tmp = n & 0xF;
+    if (tmp >= 0xA)
+    {
+        fb_put_char (tmp-0xA+'a');
+    }
+    else
+    {
+        fb_put_char (tmp+'0');
+    }
+}
+
 void fb_scroll(void)
 {
 	// Move last 24 lines up one line

@@ -13,5 +13,6 @@ void fb_clear(void);
 void fb_put_char(char c);
 void fb_write(char *buf);
 void fb_write_dec(uint32_t n);
+void fb_write_hex(uint32_t n);
 
 #endif

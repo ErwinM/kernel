@@ -4,7 +4,7 @@
 
 #include "paging.h"
 #include "common.h"
-#include "irq.h"
+#include "isr.h"
 #include "write.h"
 
 extern uint32_t end;
@@ -204,7 +204,7 @@ void page_fault(regs_t regs)
    // A page fault has occurred.
    // The faulting address is stored in the CR2 register.
    uint32_t faulting_address;
-   //asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+   asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 
    // The error code gives us details of what happened.
    int present   = !(regs.err_code & 0x1); // Page not present
@@ -219,8 +219,8 @@ void page_fault(regs_t regs)
    if (rw) {fb_write("read-only ");}
    if (us) {fb_write("user-mode ");}
    if (reserved) {fb_write("reserved ");}
-   fb_write(") at 0x");
-   //monitor_write_hex(faulting_address);
+   fb_write(" at ");
+   fb_write_hex(faulting_address);
    fb_write("\n");
    PANIC("Page fault");
 }

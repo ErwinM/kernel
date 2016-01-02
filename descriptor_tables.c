@@ -6,7 +6,6 @@
 #include "common.h"
 #include "kernel.h"
 #include "descriptor_tables.h"
-#include "irq.h"
 
 static void gdt_set_entry( uint16_t entry_num, uint32_t limit, uint32_t base, uint8_t access_byte, uint8_t gran);
 static void idt_set_entry( uint16_t entry_num, uint32_t base, uint16_t sel, uint8_t access_byte );

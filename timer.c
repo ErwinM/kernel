@@ -2,7 +2,7 @@
 // Written for JamesM's kernel development tutorials.
 
 #include "timer.h"
-#include "irq.h"
+#include "isr.h"
 #include "write.h"
 
 uint32_t tick = 0;

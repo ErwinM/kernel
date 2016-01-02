@@ -14,11 +14,15 @@ int kmain(void)
 	fb_write("Setting up Interrupt Descriptor Table...");
 	init_idt();
 	fb_write("Success!\n");
-/*
+
+	//asm volatile ("int $0x3");
+	//asm volatile ("int $0x4");
+
+
 	fb_write("Initialising timer...");
 	init_timer(50);
 	fb_write("Success!\n");
-*/
+
 	fb_write("Initialising paging...");
 	initialise_paging();
   fb_write("Hello, paging world!\n");

@@ -143,6 +143,8 @@ page_t *get_page(uint32_t address, int make, page_directory_t *dir)
    {
        uint32_t tmp;
        dir->tables[table_idx] = (page_table_t*)kmalloc_ap(sizeof(page_table_t), &tmp);
+			 fb_write("got back TMP value of: ");
+			 fb_write_hex(tmp);
        memset(dir->tables[table_idx], 0, 0x1000);
        dir->tablesPhysical[table_idx] = tmp | 0x7; // PRESENT, RW, US.
        return &dir->tables[table_idx]->pages[frame_number%1024];
@@ -168,7 +170,8 @@ void initialise_paging()
 	fb_write("Building kernel_page_directory...");
 	kernel_page_directory = (page_directory_t*)kmalloc_a(sizeof(page_directory_t));
 	memset(kernel_page_directory, 0, sizeof(page_directory_t));
-
+	fb_write("\n kernal Page directory size: ");
+	fb_write_dec(sizeof(kernel_page_directory));
 
 	// We need to identity map (virtual == physical) the kernel memory used
 	// so far or the kernel will be lost after turning on paging; luckily
@@ -192,6 +195,12 @@ void initialise_paging()
 void switch_page_directory(page_directory_t *dir)
 {
     current_page_directory = dir;
+		/*fb_write("\n");
+		fb_write_hex(dir->tables[0]);
+		fb_write("\n");
+		fb_write_hex(&dir->tables[0]);
+		fb_write_hex(&dir->tablesPhysical);
+		*/
     asm volatile("mov %0, %%cr3":: "r"(&dir->tablesPhysical));
     uint32_t cr0;
     asm volatile("mov %%cr0, %0": "=r"(cr0));

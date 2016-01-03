@@ -171,7 +171,7 @@ void initialise_paging()
 	// Setup the kernal page_directory
 	fb_write("Allocating space for kernel_page_directory...");
 	uint32_t *initial_kernel_page_dir = (uint32_t *)kmalloc_a(0x1000);
-	//memset(*kernel_page_dir_CR3, 0, 0x1000);
+	memset(initial_kernel_page_dir, 0, 0x1000);
 	fb_write("Address of kernel_page_directory: ");
 	fb_write_hex(initial_kernel_page_dir);
 

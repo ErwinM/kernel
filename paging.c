@@ -11,10 +11,10 @@ extern uint32_t end;
 uint32_t placement_address = (uint32_t)&end;
 
 // The kernel's page directory
-page_directory_t *kernel_page_directory=0;
 
-// The current page directory;
-page_directory_t *current_page_directory=0;
+// last page in vmem is mapped to the page dir, so we can edit pdes this way once paging is enabled
+uint32_t *kernel_page_dir = (uint32_t*) 0xFFFFF000;
+uint32_t *current_page_dir;
 
 uint32_t *frames;
 uint32_t total_frames;
@@ -88,7 +88,7 @@ static uint32_t test_frame(uint32_t frame_addr)
 static uint32_t first_free_frame()
 {
     uint32_t i, j;
-    for (i = 0; i < INDEX_FROM_BIT(total_frames); i++)
+    for (i = 0; i < INDEX_FROM_BIT(total_frames); i++) // loop over every bitmask byte
     {
         if (frames[i] != 0xFFFFFFFF) // nothing free, exit early.
         {
@@ -99,6 +99,7 @@ static uint32_t first_free_frame()
                 if ( !(frames[i]&toTest) )
                 {
 										// return the index of the free frame
+										// e.g. the nth frame out of 4096 frames (16mb) is free
 										return i*4*8+j;
                 }
             }
@@ -106,53 +107,54 @@ static uint32_t first_free_frame()
     }
 }
 
-void alloc_frame(page_t *page, int is_kernel, int is_writeable)
-{
-	if ( page->frame != 0 )
-	{
-		return; // Frame already allocated
-	}
-	else
-	{
-		uint32_t idx = first_free_frame(); // idx is now the index of the first free frame.
-   	if (idx == (uint32_t)-1)
-   	{
-       // PANIC is just a macro that prints a message to the screen then hits an infinite loop.
-       PANIC("No free frames!");
-   	}
-   	set_frame(idx*0x1000); // this frame is now ours!
-   	page->present = 1; // Mark it as present.
-   	page->rw = (is_writeable)?1:0; // Should the page be writeable?
-   	page->user = (is_kernel)?0:1; // Should the page be user-mode?
-   	page->frame = idx;
-	}
+pageinfo mm_virtaddrtopageindex(uint32_t virtaddr){
+    pageinfo pginf;
 
+    //align address to 4k (highest 20-bits of address)
+    virtaddr &= ~0xFFF;
+    pginf.pagetable = virtaddr / 0x400000; // each page table covers 0x400000 bytes in memory
+    pginf.page = (virtaddr % 0x400000) / 0x1000; //0x1000 = page size
+    return pginf;
 }
 
-page_t *get_page(uint32_t address, int make, page_directory_t *dir)
+uint32_t mm_allocphyspage()
 {
-   // Turn the address into an index.
-   uint32_t frame_number = address / 0x1000;
-   // Find the page table containing this address.
-   uint32_t table_idx = frame_number / 1024;
-   if (dir->tables[table_idx]) // If this table is already assigned
-   {
-       return &dir->tables[table_idx]->pages[frame_number%1024];
-   }
-   else if(make)
-   {
-       uint32_t tmp;
-       dir->tables[table_idx] = (page_table_t*)kmalloc_ap(sizeof(page_table_t), &tmp);
-			 fb_write("got back TMP value of: ");
-			 fb_write_hex(tmp);
-       memset(dir->tables[table_idx], 0, 0x1000);
-       dir->tablesPhysical[table_idx] = tmp | 0x7; // PRESENT, RW, US.
-       return &dir->tables[table_idx]->pages[frame_number%1024];
-   }
-   else
-   {
-       return 0;
-   }
+	uint32_t idx = first_free_frame(); // idx is now the index of the first free frame
+	uint32_t phys_address = (idx * 0x1000);
+	set_frame(phys_address); // this frame is now ours!
+	memset(phys_address, 0, 4096); // clear the frame
+	return (phys_address);
+}
+
+uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
+{
+  pageinfo pginf = mm_virtaddrtopageindex(virt_address); // get the PDE and PTE indexes for the addr
+
+  if(kernel_page_dir[pginf.pagetable] & 1)
+	{
+      // page table exists.
+      uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page table
+      if(!page_table[pginf.page] & 1)
+			{
+          // page isn't mapped
+          page_table[pginf.page] = phys_address | 3;
+      }
+			else
+			{
+          // page is already mapped
+          PANIC("PAGE ALREADY MAPPED");
+      }
+  	}
+		else
+		{
+      // page table doesn't exist, so alloc a page and add into pdir
+      uint32_t *new_page_table = (uint32_t *) mm_allocphyspage();
+      uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page tbl
+
+      kernel_page_dir[pginf.pagetable] = (uint32_t) new_page_table | 3; // add the new page table into the pdir
+      page_table[pginf.page] = phys_address | 3; // map the page!
+  	}
+  return 1;
 }
 
 void initialise_paging()
@@ -161,47 +163,60 @@ void initialise_paging()
 	uint32_t size_of_memory = 0x1000000;
 
 	// Setup the space for the bitmap that tracks frame usage
-	fb_write("Building frame bitmap...");
+	fb_write("Allocating space for frame bitmap...");
 	total_frames = size_of_memory / 0x1000;
 	frames = (uint32_t*)kmalloc_a(INDEX_FROM_BIT(total_frames));
 	memset(frames, 0, INDEX_FROM_BIT(total_frames));
 
 	// Setup the kernal page_directory
-	fb_write("Building kernel_page_directory...");
-	kernel_page_directory = (page_directory_t*)kmalloc_a(sizeof(page_directory_t));
-	memset(kernel_page_directory, 0, sizeof(page_directory_t));
-	fb_write("\n kernal Page directory size: ");
-	fb_write_dec(sizeof(kernel_page_directory));
+	fb_write("Allocating space for kernel_page_directory...");
+	uint32_t *initial_kernel_page_dir = (uint32_t *)kmalloc_a(0x1000);
+	//memset(*kernel_page_dir_CR3, 0, 0x1000);
+	fb_write("Address of kernel_page_directory: ");
+	fb_write_hex(initial_kernel_page_dir);
+
+	fb_write("Allocate space for first page_table...");
+	uint32_t *first_page_table = (uint32_t *)kmalloc_a(0x1000);
+	initial_kernel_page_dir[0]= first_page_table;
+	fb_write("Address of first_page_directory: ");
+	fb_write_hex(initial_kernel_page_dir[0]);
+	// Map last 4mb of (max) virtual memory to page directory (recursive)
+	//kernel_page_dir[1023] = 0xFFFFF000;
 
 	// We need to identity map (virtual == physical) the kernel memory used
-	// so far or the kernel will be lost after turning on paging; luckily
-	// placement_address points to the end of our used memory so far.
+	// so far or the kernel will be lost after turning on paging;
+	// We will identity map the first 2MB of memory. This only requires setting
+	// up a single (first) page.
+
 	fb_write("Identity mapping kernel memory...");
+
 	int i = 0;
-	while (i < placement_address)
+	uint32_t j = 0;
+	while (i < 1024)
 	{
-		alloc_frame(get_page(i, 1, kernel_page_directory), 0,0);
-		i += 0x1000;
+		first_page_table[i] = j | 3;
+		i += 1;
+		j += 0x1000;
 	}
 
 	// Before we enable paging, we must register our page fault handler.
   install_irq_handler(14, page_fault);
 
   // Now, enable paging!
-	fb_write("Enabling paging...");
-  switch_page_directory(kernel_page_directory);
+
+	fb_write("Enabling paging by loading CR3 with: ");
+	fb_write_hex(initial_kernel_page_dir);
+  switch_page_directory(initial_kernel_page_dir);
+
 }
 
-void switch_page_directory(page_directory_t *dir)
+void switch_page_directory(page_dir_t *dir)
 {
-    current_page_directory = dir;
-		/*fb_write("\n");
-		fb_write_hex(dir->tables[0]);
-		fb_write("\n");
-		fb_write_hex(&dir->tables[0]);
-		fb_write_hex(&dir->tablesPhysical);
-		*/
-    asm volatile("mov %0, %%cr3":: "r"(&dir->tablesPhysical));
+    current_page_dir = dir;
+		fb_write("\n Loading CR3: ");
+		fb_write_hex(dir);
+
+    asm volatile("mov %0, %%cr3":: "r"(dir));
     uint32_t cr0;
     asm volatile("mov %%cr0, %0": "=r"(cr0));
     cr0 |= 0x80000000; // Enable paging!

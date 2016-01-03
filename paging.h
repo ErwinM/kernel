@@ -18,30 +18,16 @@ typedef struct page
 	uint32_t frame				: 20;// frame address (4-aligned)
 } page_t;
 
-typedef struct page_table
-{
-	page_t pages[1024];
-} page_table_t;
 
-typedef struct page_directory
-{
-    /**
-       Array of pointers to pagetables.
-    **/
-    page_table_t *tables[1024];
-    /**
-       Array of pointers to the pagetables above, but gives their *physical*
-       location, for loading into the CR3 register.
-    **/
-    uint32_t tablesPhysical[1024];
+typedef struct __attribute__ ((packed)){
+    int pagetable;
+    int page;
+}pageinfo, *ppageinfo;
 
-    /**
-       The physical address of tablesPhysical. This comes into play
-       when we get our kernel heap allocated and the directory
-       may be in a different location in virtual memory.
-    **/
-    uint32_t physicalAddr;
-} page_directory_t;
+typedef struct __attribute__ ((packed))
+{
+	uint32_t *pointers[1024];
+} page_dir_t, page_table_t;
 
 /**
   Sets up the environment, page directories etc and
@@ -53,14 +39,7 @@ void initialise_paging();
   Causes the specified page directory to be loaded into the
   CR3 register.
 **/
-void switch_page_directory(page_directory_t *new);
-
-/**
-  Retrieves a pointer to the page required.
-  If make == 1, if the page-table in which this page should
-  reside isn't created, create it!
-**/
-page_t *get_page(uint32_t address, int make, page_directory_t *dir);
+void switch_page_directory(page_dir_t *new);
 
 /**
   Handler for page faults.

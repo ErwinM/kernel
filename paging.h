@@ -39,7 +39,7 @@ void initialise_paging();
   Causes the specified page directory to be loaded into the
   CR3 register.
 **/
-void switch_page_directory(page_dir_t *new);
+void switch_page_directory(uint32_t *new);
 
 /**
   Handler for page faults.

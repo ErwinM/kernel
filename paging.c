@@ -177,7 +177,8 @@ void initialise_paging()
 
 	fb_write("Allocate space for first page_table...");
 	uint32_t *first_page_table = (uint32_t *)kmalloc_a(0x1000);
-	initial_kernel_page_dir[0]= first_page_table;
+	initial_kernel_page_dir[0] = first_page_table;
+	initial_kernel_page_dir[0] += 0x3;
 	fb_write("Address of first_page_directory: ");
 	fb_write_hex(initial_kernel_page_dir[0]);
 	// Map last 4mb of (max) virtual memory to page directory (recursive)
@@ -194,7 +195,8 @@ void initialise_paging()
 	uint32_t j = 0;
 	while (i < 1024)
 	{
-		first_page_table[i] = j | 3;
+		int frame_mask = j | 3;
+		first_page_table[i] = frame_mask;
 		i += 1;
 		j += 0x1000;
 	}
@@ -210,14 +212,13 @@ void initialise_paging()
 
 }
 
-void switch_page_directory(page_dir_t *dir)
+void switch_page_directory(uint32_t *dir)
 {
     current_page_dir = dir;
 		fb_write("\n Loading CR3: ");
 		fb_write_hex(dir);
-
     asm volatile("mov %0, %%cr3":: "r"(dir));
-    uint32_t cr0;
+		uint32_t cr0;
     asm volatile("mov %%cr0, %0": "=r"(cr0));
     cr0 |= 0x80000000; // Enable paging!
     asm volatile("mov %0, %%cr0":: "r"(cr0));

@@ -1,11 +1,21 @@
 #include "common.h"
 #include "write.h"
 
-unsigned short *vidptr = (unsigned short *)0xB8000; 	//video mem begins here.
+unsigned short *vidptr = (unsigned short *)0xB8000;
 uint16_t cursor_x = 0, cursor_y = 0;
 
 void fb_move_cursor();
 void fb_scroll(void);
+
+void fb_init(uint8_t mapped_to_himem)
+{
+	if (mapped_to_himem)
+	{
+	*vidptr = (unsigned short *)0xC0B8000; 	//video mem is mapped to here
+	}
+}
+
+
 void fb_clear(void)
 {
 	// Make an attribute byte for the default colours

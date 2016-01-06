@@ -181,6 +181,13 @@ void initialise_paging()
 	initial_kernel_page_dir[0] += 0x3;
 	fb_write("Address of first_page_directory: ");
 	fb_write_hex(initial_kernel_page_dir[0]);
+
+	fb_write("Allocate space for fourth page_table...");
+	uint32_t *third_page_table = (uint32_t *)kmalloc_a(0x1000);
+	initial_kernel_page_dir[3] = third_page_table;
+	initial_kernel_page_dir[3] += 0x3;
+	fb_write("Address of first_page_directory: ");
+	fb_write_hex(initial_kernel_page_dir[3]);
 	// Map last 4mb of (max) virtual memory to page directory (recursive)
 	//kernel_page_dir[1023] = 0xFFFFF000;
 
@@ -190,13 +197,35 @@ void initialise_paging()
 	// up a single (first) page.
 
 	fb_write("Identity mapping kernel memory...");
-
 	int i = 0;
 	uint32_t j = 0;
-	while (i < 1024)
+	while (i < 255)
 	{
-		int frame_mask = j | 3;
+		int frame_mask = j | 0x3;
 		first_page_table[i] = frame_mask;
+		set_frame(j);
+		i += 1;
+		j += 0x1000;
+	}
+
+	i = 256;
+	j = 0xd00000;
+	while (i < 767)
+	{
+		int frame_mask = j | 0x3;
+		third_page_table[i] = frame_mask;
+		set_frame(j);
+		i += 1;
+		j += 0x1000;
+	}
+
+	i = 0;
+	j = 0;
+	while (i < 256)
+	{
+		int frame_mask = j | 0x3;
+		third_page_table[i] = frame_mask;
+		set_frame(j);
 		i += 1;
 		j += 0x1000;
 	}
@@ -205,11 +234,11 @@ void initialise_paging()
   install_irq_handler(14, page_fault);
 
   // Now, enable paging!
-
 	fb_write("Enabling paging by loading CR3 with: ");
 	fb_write_hex(initial_kernel_page_dir);
   switch_page_directory(initial_kernel_page_dir);
-
+	fb_init(1);
+	initial_kernel_page_dir[0]=0;
 }
 
 void switch_page_directory(uint32_t *dir)

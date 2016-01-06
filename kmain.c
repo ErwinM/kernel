@@ -6,6 +6,7 @@ int kmain(void)
 {
 
 	//const char *str = "erwin's first kernel";
+	fb_init(0);
 	fb_clear();
 	fb_write("Setting up Global Descriptor Table...");
 	init_gdt();

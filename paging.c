@@ -10,6 +10,8 @@
 extern uint32_t end;
 uint32_t placement_address = (uint32_t)&end;
 
+setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start);
+
 // The kernel's page directory
 
 // last page in vmem is mapped to the page dir, so we can edit pdes this way once paging is enabled
@@ -191,44 +193,18 @@ void initialise_paging()
 	// Map last 4mb of (max) virtual memory to page directory (recursive)
 	//kernel_page_dir[1023] = 0xFFFFF000;
 
-	// We need to identity map (virtual == physical) the kernel memory used
-	// so far or the kernel will be lost after turning on paging;
-	// We will identity map the first 2MB of memory. This only requires setting
-	// up a single (first) page.
-
 	fb_write("Identity mapping kernel memory...");
-	int i = 0;
-	uint32_t j = 0;
-	while (i < 255)
-	{
-		int frame_mask = j | 0x3;
-		first_page_table[i] = frame_mask;
-		set_frame(j);
-		i += 1;
-		j += 0x1000;
-	}
 
-	i = 256;
-	j = 0xd00000;
-	while (i < 767)
-	{
-		int frame_mask = j | 0x3;
-		third_page_table[i] = frame_mask;
-		set_frame(j);
-		i += 1;
-		j += 0x1000;
-	}
+	// Temporarily identity map first MB of physical memory or kernel will crash
+	// due to unavailable ROM memory
+	setup_pt(first_page_table, 0, 255, 0 );
 
-	i = 0;
-	j = 0;
-	while (i < 256)
-	{
-		int frame_mask = j | 0x3;
-		third_page_table[i] = frame_mask;
-		set_frame(j);
-		i += 1;
-		j += 0x1000;
-	}
+	// Map first Mb physical to 0xc00000; 0xc00000 is the start of the 3rd PT
+	setup_pt(third_page_table, 0, 255, 0);
+
+	// Identity map the kernel area 0xd00000 and up 3mb
+	setup_pt(third_page_table, 256, 1024, 0xd00000);
+
 
 	// Before we enable paging, we must register our page fault handler.
   install_irq_handler(14, page_fault);
@@ -277,4 +253,16 @@ void page_fault(regs_t regs)
    fb_write_hex(faulting_address);
    fb_write("\n");
    PANIC("Page fault");
+}
+
+setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start)
+{
+	while (index_start < index_end)
+	{
+		int frame_mask = physical_start | 0x3;
+		page_table[index_start] = frame_mask;
+		set_frame(physical_start);
+		index_start += 1;
+		physical_start += 0x1000;
+	}
 }

@@ -11,7 +11,7 @@ void fb_init(uint8_t mapped_to_himem)
 {
 	if (mapped_to_himem)
 	{
-	*vidptr = (unsigned short *)0xC0B8000; 	//video mem is mapped to here
+	*vidptr = (unsigned short *)0xcB8000; 	//video mem is mapped to here
 	}
 }
 

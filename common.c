@@ -32,3 +32,19 @@ extern void panic(const char *message, const char *file, uint32_t line)
     // Halt by going into an infinite loop.
     for(;;);
 }
+
+extern void panic_assert(const char *file, uint32_t line, const char *desc)
+{
+    // An assertion failed, and we have to panic.
+    asm volatile("cli"); // Disable interrupts.
+
+    fb_write("ASSERTION-FAILED(");
+    fb_write(desc);
+    fb_write(") at ");
+    fb_write(file);
+    fb_write(":");
+    fb_write_dec(line);
+    fb_write("\n");
+    // Halt by going into an infinite loop.
+    for(;;);
+}

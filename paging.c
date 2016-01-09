@@ -6,22 +6,24 @@
 #include "common.h"
 #include "isr.h"
 #include "write.h"
+#include "kheap.h"
 
 extern uint32_t end;
+extern heap_t *kheap;
 uint32_t placement_address = (uint32_t)&end;
+
+pageinfo mm_virtaddrtopageindex(uint32_t virtaddr);
 
 setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start);
 
 // The kernel's page directory
-
-// last page in vmem is mapped to the page dir, so we can edit pdes this way once paging is enabled
-uint32_t *kernel_page_dir = (uint32_t*) 0xFFFFF000;
+uint32_t *kernel_page_dir;
 uint32_t *current_page_dir;
 
 uint32_t *frames;
 uint32_t total_frames;
 
-uint32_t kmalloc(uint32_t size, int align, uint32_t *phys)
+uint32_t kmalloc(uint32_t size, int align)
 {
 	fb_write("\nPlacement pointer: ");
 	fb_write_hex(placement_address);
@@ -31,10 +33,6 @@ uint32_t kmalloc(uint32_t size, int align, uint32_t *phys)
 		placement_address &= 0xFFFFF000;
 		placement_address += 0x1000;
 	}
-if (phys)
-{
-	*phys = placement_address;
-}
 	uint32_t placed_at = placement_address;
 	fb_write(", Requested size: ");
 	fb_write_dec(size);
@@ -47,12 +45,7 @@ if (phys)
 
 uint32_t kmalloc_a(uint32_t size)
 {
-	return kmalloc(size, 1, 0);
-}
-
-uint32_t kmalloc_ap(uint32_t size, uint32_t *phys)
-{
-	return kmalloc(size, 1, phys);
+	return kmalloc(size, 1);
 }
 
 // Macros used in the bitset algorithms.
@@ -92,6 +85,8 @@ static uint32_t first_free_frame()
     uint32_t i, j;
     for (i = 0; i < INDEX_FROM_BIT(total_frames); i++) // loop over every bitmask byte
     {
+				//fb_write("\n");
+				//fb_write_hex(frames[i]);
         if (frames[i] != 0xFFFFFFFF) // nothing free, exit early.
         {
             // at least one bit is free here.
@@ -100,9 +95,11 @@ static uint32_t first_free_frame()
                 uint32_t toTest = 0x1 << j;
                 if ( !(frames[i]&toTest) )
                 {
-										// return the index of the free frame
-										// e.g. the nth frame out of 4096 frames (16mb) is free
-										return i*4*8+j;
+									// return the index of the free frame
+									// e.g. the nth frame out of 4096 frames (16mb) is free
+									//fb_write("first free frame idx: ");
+									//fb_write_dec(i*4*8+j);
+									return i*4*8+j;
                 }
             }
         }
@@ -121,20 +118,24 @@ pageinfo mm_virtaddrtopageindex(uint32_t virtaddr){
 
 uint32_t mm_allocphyspage()
 {
+	//fb_write("Allocating page...");
 	uint32_t idx = first_free_frame(); // idx is now the index of the first free frame
 	uint32_t phys_address = (idx * 0x1000);
 	set_frame(phys_address); // this frame is now ours!
-	memset(phys_address, 0, 4096); // clear the frame
+	//memset(phys_address, 0, 4096); // need to use virtual address!
+	//fb_write_hex(phys_address);
 	return (phys_address);
 }
 
 uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
 {
-  pageinfo pginf = mm_virtaddrtopageindex(virt_address); // get the PDE and PTE indexes for the addr
-
+	//fb_write("mapping...");
+	pageinfo pginf = mm_virtaddrtopageindex(virt_address); // get the PDE and PTE indexes for the addr
+	//fb_write_dec(pginf.pagetable);
   if(kernel_page_dir[pginf.pagetable] & 1)
 	{
       // page table exists.
+			fb_write("page table exists..");
       uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page table
       if(!page_table[pginf.page] & 1)
 			{
@@ -149,14 +150,42 @@ uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
   	}
 		else
 		{
-      // page table doesn't exist, so alloc a page and add into pdir
-      uint32_t *new_page_table = (uint32_t *) mm_allocphyspage();
+			fb_write("PT does not exist, creating...");
+			// page table doesn't exist, so alloc a page and add into pdir
+      uint32_t *phys_addr_page_table = (uint32_t *) mm_allocphyspage();
       uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page tbl
 
-      kernel_page_dir[pginf.pagetable] = (uint32_t) new_page_table | 3; // add the new page table into the pdir
+      kernel_page_dir[pginf.pagetable] = (uint32_t) phys_addr_page_table | 3; // add the new page table into the pdir
       page_table[pginf.page] = phys_address | 3; // map the page!
   	}
   return 1;
+}
+
+void mm_unmappage(unsigned long virt_address)
+{
+	pageinfo pginf = mm_virtaddrtopageindex(virt_address);
+
+  if(kernel_page_dir[pginf.pagetable] & 1)
+	{
+    int i;
+    unsigned long *page_table = (unsigned long *) (0xFFC00000 + (pginf.pagetable * 0x1000));
+    if(page_table[pginf.page] & 1)
+		{
+        // page is mapped, so unmap it
+        page_table[pginf.page] = 2; // r/w, not present
+  	}
+
+	  // check if there are any more present PTEs in this page table
+	  for(i = 0; i < 1024; i++){
+	      if(page_table[i] & 1) break;
+	  }
+
+    // if there are none, then free the space allocated to the page table and delete mappings
+    if(i == 1024){
+      //  mm_freephyspage(kernel_page_dir[pginf.pagetable] & 0xFFFFF000);
+        kernel_page_dir[pginf.pagetable] = 2;
+    }
+  }
 }
 
 void initialise_paging()
@@ -172,29 +201,26 @@ void initialise_paging()
 
 	// Setup the kernal page_directory
 	fb_write("Allocating space for kernel_page_directory...");
-	uint32_t *initial_kernel_page_dir = (uint32_t *)kmalloc_a(0x1000);
-	memset(initial_kernel_page_dir, 0, 0x1000);
+	uint32_t *kernel_page_dir = (uint32_t *)kmalloc_a(0x1000);
+	memset(kernel_page_dir, 0, 0x1000);
 	fb_write("Address of kernel_page_directory: ");
-	fb_write_hex(initial_kernel_page_dir);
+	fb_write_hex(kernel_page_dir);
 
 	fb_write("Allocate space for first page_table...");
 	uint32_t *first_page_table = (uint32_t *)kmalloc_a(0x1000);
-	initial_kernel_page_dir[0] = first_page_table;
-	initial_kernel_page_dir[0] += 0x3;
+	kernel_page_dir[0] = first_page_table;
+	kernel_page_dir[0] += 0x3;
 	fb_write("Address of first_page_directory: ");
-	fb_write_hex(initial_kernel_page_dir[0]);
+	fb_write_hex(kernel_page_dir[0]);
 
 	fb_write("Allocate space for fourth page_table...");
 	uint32_t *third_page_table = (uint32_t *)kmalloc_a(0x1000);
-	initial_kernel_page_dir[3] = third_page_table;
-	initial_kernel_page_dir[3] += 0x3;
+	kernel_page_dir[3] = third_page_table;
+	kernel_page_dir[3] += 0x3;
 	fb_write("Address of first_page_directory: ");
-	fb_write_hex(initial_kernel_page_dir[3]);
-	// Map last 4mb of (max) virtual memory to page directory (recursive)
-	//kernel_page_dir[1023] = 0xFFFFF000;
+	fb_write_hex(kernel_page_dir[3]);
 
 	fb_write("Identity mapping kernel memory...");
-
 	// Temporarily identity map first MB of physical memory or kernel will crash
 	// due to unavailable ROM memory
 	setup_pt(first_page_table, 0, 255, 0 );
@@ -202,19 +228,39 @@ void initialise_paging()
 	// Map first Mb physical to 0xc00000; 0xc00000 is the start of the 3rd PT
 	setup_pt(third_page_table, 0, 255, 0);
 
-	// Identity map the kernel area 0xd00000 and up 3mb
-	setup_pt(third_page_table, 256, 1024, 0xd00000);
+	// Identity map the kernel code and critical data area:
+	// 0xd00000 up to 0xe00000
+	setup_pt(third_page_table, 256, 511, 0xd00000);
 
+	// Map  last 4mb of (max) virtual memory to page directory (recursive)
+	kernel_page_dir[1023] = 0xd07003;
 
 	// Before we enable paging, we must register our page fault handler.
   install_irq_handler(14, page_fault);
 
   // Now, enable paging!
 	fb_write("Enabling paging by loading CR3 with: ");
-	fb_write_hex(initial_kernel_page_dir);
-  switch_page_directory(initial_kernel_page_dir);
-	fb_init(1);
-	initial_kernel_page_dir[0]=0;
+	fb_write_hex(kernel_page_dir);
+  switch_page_directory(kernel_page_dir);
+	fb_write_hex(kernel_page_dir[0]);
+	fb_init(1); // Redirect pointer to video memory
+	//kernel_page_dir[0]=0; // free up first 1mb of linear memory space
+
+	// Initialise the kernel heap
+	fb_write("Initialising heap...");
+	// Map the heap memory to pages
+	int k;
+	for (k = KHEAP_START ; k < (KHEAP_START + KHEAP_SIZE) ; k += 0x1000)
+	{
+		//fb_write("getting free page...");
+		uint32_t free_page = mm_allocphyspage();
+		//fb_write_hex(free_page);
+		mm_mappage(free_page, k);
+	}
+	fb_write("Allocated required pages...");
+
+	kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_SIZE, 1 ,1);
+	fb_write("enabled.");
 }
 
 void switch_page_directory(uint32_t *dir)

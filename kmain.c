@@ -28,8 +28,11 @@ int kmain(void)
 	initialise_paging();
   fb_write("Hello, paging world!\n");
 
-  uint32_t *ptr = (uint32_t*)0xA0000000;
-  uint32_t do_page_fault = *ptr;
+
+	int32_t *tmp = (uint32_t *)0xcb8000;
+	//fb_write_hex(*tmp);
+  //uint32_t *ptr = (uint32_t*)0xA0000000;
+  //uint32_t do_page_fault = *ptr;
 
   return 0;
 

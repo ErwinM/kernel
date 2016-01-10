@@ -25,8 +25,9 @@ uint32_t total_frames;
 
 uint32_t kmalloc(uint32_t size, int align)
 {
-	fb_write("\nPlacement pointer: ");
-	fb_write_hex(placement_address);
+	fb_printf("Placement address: %h", placement_address);
+	//fb_write("\nPlacement pointer: ");
+	//fb_write_hex(placement_address);
 	if (align == 1 && (placement_address & 0xFFFFF000)) // if address is not 4k-aligned
 	{
 		// Align it
@@ -135,7 +136,6 @@ uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
   if(kernel_page_dir[pginf.pagetable] & 1)
 	{
       // page table exists.
-			fb_write("page table exists..");
       uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page table
       if(!page_table[pginf.page] & 1)
 			{
@@ -150,7 +150,6 @@ uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
   	}
 		else
 		{
-			fb_write("PT does not exist, creating...");
 			// page table doesn't exist, so alloc a page and add into pdir
       uint32_t *phys_addr_page_table = (uint32_t *) mm_allocphyspage();
       uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page tbl

@@ -4,8 +4,10 @@
 unsigned short *vidptr = (unsigned short *)0xB8000;
 uint16_t cursor_x = 0, cursor_y = 0;
 
-void fb_move_cursor();
+void fb_move_cursor(void);
 void fb_scroll(void);
+void fb_write_hex(uint32_t n);
+void fb_write_dec(uint32_t n);
 
 void fb_init(uint8_t mapped_to_himem)
 {
@@ -69,7 +71,7 @@ void fb_put_char(char c)
 	}
 }
 
-void fb_move_cursor()
+void fb_move_cursor(void)
 {
 	uint16_t pos = cursor_y * 80 + cursor_x;
 	outb(FB_COMMAND_PORT, FB_HIGH_BYTE_COMMAND);
@@ -77,6 +79,34 @@ void fb_move_cursor()
 	outb(FB_COMMAND_PORT, FB_LOW_BYTE_COMMAND);
 	outb(FB_DATA_PORT, pos);
 }
+
+void fb_printf(char *buf, uint32_t n)
+{
+	int i = 0;
+	while( buf[i] != '\0')
+	{
+		if (buf[i] == 0x25)
+		{
+			if (buf[i+1] == 0x64)
+			{
+				fb_write_dec(n);
+				i += 2;
+			} else if (buf[i+1] == 0x68)
+			{
+				fb_write_hex(n);
+				i += 2;
+			} else {
+				fb_put_char(buf[i]);
+				i++;
+			}
+		} else {
+		fb_put_char(buf[i]);
+		i++;
+		}
+	}
+	fb_move_cursor();
+}
+
 
 void fb_write(char *buf)
 {

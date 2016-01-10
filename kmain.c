@@ -8,6 +8,7 @@ int kmain(void)
 	//const char *str = "erwin's first kernel";
 	fb_init(0);
 	fb_clear();
+
 	fb_write("Setting up Global Descriptor Table...");
 	init_gdt();
 	fb_write("Success!\n");
@@ -35,5 +36,4 @@ int kmain(void)
   //uint32_t do_page_fault = *ptr;
 
   return 0;
-
 }

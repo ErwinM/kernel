@@ -35,9 +35,9 @@ void insert_ordered_list(void* item, ordered_list_t *ordered_list)
 		// just add it to the end of the list
 		ordered_list->list[i] = item;
 		ordered_list->size += 1;
-		fb_printf("got item: %h", item);
-		fb_printf("LOC: %h", &ordered_list->list[i]);
-		fb_printf("Value: %h", ordered_list->list[i]);
+		//fb_printf("got item: %h", item);
+		//fb_printf("LOC: %h", &ordered_list->list[i]);
+		//fb_printf("Value: %h", ordered_list->list[i]);
 	} else {
 		// insert the item at position i and shift all following items up once
 		// first shift the rest up once
@@ -54,7 +54,7 @@ void insert_ordered_list(void* item, ordered_list_t *ordered_list)
 type_t lookup_ordered_list(uint32_t i, ordered_list_t *ordered_list)
 {
 	ASSERT(i<=ordered_list->size);
-	fb_printf("Lookup internal returning: %h", ordered_list->list[i]);
+	//fb_printf("Lookup internal returning: %h", ordered_list->list[i]);
 	return ordered_list->list[i];
 }
 

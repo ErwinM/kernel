@@ -32,8 +32,8 @@ int kmain(void)
 	initialise_paging();
   fb_write("Hello, paging world!\n");
 
-//	uint32_t *a1 = alloc(1024, 0, kheap);
-	//fb_printf("a1: %h", a1);
+	uint32_t *a1 = alloc(1024, 0, kheap);
+	fb_printf("a1: %h", a1);
 
   return 0;
 }

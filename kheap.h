@@ -31,3 +31,5 @@ typedef struct
 	uint8_t kernel_mode;
 	uint8_t read_only;
 } heap_t;
+
+void *alloc( uint32_t size, uint8_t page_align, heap_t *heap);

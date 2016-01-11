@@ -28,7 +28,7 @@ uint32_t kmalloc(uint32_t size, int align)
 	fb_printf("Placement address: %h", placement_address);
 	//fb_write("\nPlacement pointer: ");
 	//fb_write_hex(placement_address);
-	if (align == 1 && (placement_address & 0xFFFFF000)) // if address is not 4k-aligned
+	if (align == 1 && (placement_address & ~0xFFFFF000)) // if address is not 4k-aligned
 	{
 		// Align it
 		placement_address &= 0xFFFFF000;
@@ -145,7 +145,9 @@ uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
 			else
 			{
           // page is already mapped
-          PANIC("PAGE ALREADY MAPPED");
+					fb_printf("attempting to map table: %d", pginf.pagetable);
+					fb_printf("an page: %d", pginf.page);
+					PANIC("PAGE ALREADY MAPPED");
       }
   	}
 		else
@@ -193,31 +195,28 @@ void initialise_paging()
 	uint32_t size_of_memory = 0x1000000;
 
 	// Setup the space for the bitmap that tracks frame usage
-	fb_write("Allocating space for frame bitmap...");
+	fb_write("Allocating space for frame bitmap...\n");
 	total_frames = size_of_memory / 0x1000;
 	frames = (uint32_t*)kmalloc_a(INDEX_FROM_BIT(total_frames));
 	memset(frames, 0, INDEX_FROM_BIT(total_frames));
 
 	// Setup the kernal page_directory
-	fb_write("Allocating space for kernel_page_directory...");
+	fb_write("Allocating space for kernel_page_directory...\n");
 	uint32_t *kernel_page_dir = (uint32_t *)kmalloc_a(0x1000);
 	memset(kernel_page_dir, 0, 0x1000);
-	fb_write("Address of kernel_page_directory: ");
-	fb_write_hex(kernel_page_dir);
+	fb_printf("Address of kernel_page_directory: %h\n", kernel_page_dir);
 
-	fb_write("Allocate space for first page_table...");
+	fb_write("Allocate space for first page_table...\n");
 	uint32_t *first_page_table = (uint32_t *)kmalloc_a(0x1000);
 	kernel_page_dir[0] = first_page_table;
 	kernel_page_dir[0] += 0x3;
-	fb_write("Address of first_page_directory: ");
-	fb_write_hex(kernel_page_dir[0]);
+	fb_printf("Address of first_page_directory: %h\n", kernel_page_dir[0]);
 
 	fb_write("Allocate space for fourth page_table...");
 	uint32_t *third_page_table = (uint32_t *)kmalloc_a(0x1000);
 	kernel_page_dir[3] = third_page_table;
 	kernel_page_dir[3] += 0x3;
-	fb_write("Address of first_page_directory: ");
-	fb_write_hex(kernel_page_dir[3]);
+	fb_printf("Address of first_page_directory: %h\n", kernel_page_dir[3]);
 
 	fb_write("Identity mapping kernel memory...");
 	// Temporarily identity map first MB of physical memory or kernel will crash
@@ -232,16 +231,15 @@ void initialise_paging()
 	setup_pt(third_page_table, 256, 511, 0xd00000);
 
 	// Map  last 4mb of (max) virtual memory to page directory (recursive)
-	kernel_page_dir[1023] = 0xd07003;
+	uint32_t kernel_dir_mask = (uint32_t)kernel_page_dir + 3;
+	kernel_page_dir[1023] = kernel_dir_mask;
 
 	// Before we enable paging, we must register our page fault handler.
   install_irq_handler(14, page_fault);
 
   // Now, enable paging!
-	fb_write("Enabling paging by loading CR3 with: ");
-	fb_write_hex(kernel_page_dir);
+	fb_printf("Enabling paging by loading CR3 with: %h", kernel_page_dir);
   switch_page_directory(kernel_page_dir);
-	fb_write_hex(kernel_page_dir[0]);
 	fb_init(1); // Redirect pointer to video memory
 	//kernel_page_dir[0]=0; // free up first 1mb of linear memory space
 
@@ -257,7 +255,6 @@ void initialise_paging()
 		mm_mappage(free_page, k);
 	}
 	fb_write("Allocated required pages...");
-
 	kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_SIZE, 1 ,1);
 	fb_write("enabled.");
 }
@@ -265,8 +262,6 @@ void initialise_paging()
 void switch_page_directory(uint32_t *dir)
 {
     current_page_dir = dir;
-		fb_write("\n Loading CR3: ");
-		fb_write_hex(dir);
     asm volatile("mov %0, %%cr3":: "r"(dir));
 		uint32_t cr0;
     asm volatile("mov %%cr0, %0": "=r"(cr0));
@@ -302,7 +297,7 @@ void page_fault(regs_t regs)
 
 setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start)
 {
-	while (index_start < index_end)
+	while (index_start <= index_end)
 	{
 		int frame_mask = physical_start | 0x3;
 		page_table[index_start] = frame_mask;

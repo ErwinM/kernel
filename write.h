@@ -15,6 +15,7 @@ void fb_write(char *buf);
 void fb_write_dec(uint32_t n);
 void fb_write_hex(uint32_t n);
 void fb_init(uint8_t n);
+void fb_printf(char *buf, uint32_t n);
 
 
 #endif

@@ -2,12 +2,15 @@
 #include "write.h"
 #include "descriptor_tables.h"
 
+extern *kheap;
+
 int kmain(void)
 {
 
 	//const char *str = "erwin's first kernel";
 	fb_init(0);
 	fb_clear();
+
 
 	fb_write("Setting up Global Descriptor Table...");
 	init_gdt();
@@ -25,15 +28,12 @@ int kmain(void)
 	init_timer(50);
 	fb_write("Success!\n");
 
-	fb_write("Initialising paging...");
+	fb_write("Initialising paging...\n");
 	initialise_paging();
   fb_write("Hello, paging world!\n");
 
-
-	int32_t *tmp = (uint32_t *)0xcb8000;
-	//fb_write_hex(*tmp);
-  //uint32_t *ptr = (uint32_t*)0xA0000000;
-  //uint32_t do_page_fault = *ptr;
+//	uint32_t *a1 = alloc(1024, 0, kheap);
+	//fb_printf("a1: %h", a1);
 
   return 0;
 }

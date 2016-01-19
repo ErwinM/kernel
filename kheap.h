@@ -33,3 +33,4 @@ typedef struct
 } heap_t;
 
 void *alloc( uint32_t size, uint8_t page_align, heap_t *heap);
+void free(void* ptr, heap_t *heap);

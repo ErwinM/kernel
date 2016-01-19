@@ -54,10 +54,10 @@ fb_write("Allocating for index now...");
 	header->is_hole = 1;
 	header->magic = HEAP_MAGIC;
 	header->size = end - start;
-	fb_printf("Location of 1st header: %h", header);
-	fb_printf("Index located at: %h", heap->index);;
+	//fb_printf("Location of 1st header: %h", header);
+	//fb_printf("Index located at: %h", heap->index);;
 	insert_ordered_list((void*)header, &heap->index);
-	uint32_t *tmp = lookup_ordered_list(0, &heap->index);
+	//uint32_t *tmp = lookup_ordered_list(0, &heap->index);
 	//fb_printf("heap size: %h", header->size);
 
 	return heap;
@@ -68,7 +68,10 @@ int32_t find_first_hole(uint32_t size, uint8_t page_align, heap_t *heap)
 		int32_t iterator = 0;
 		while (iterator < heap->index.size)
 		{
+			uint32_t lookup = lookup_ordered_list(iterator, &heap->index);
+			fb_printf("Lookup ordered list returned: %h", lookup);
 			heap_header_t *header = (heap_header_t *)lookup_ordered_list(iterator, &heap->index);
+			fb_printf("Evaluating header at: %h", header);
 			uint32_t loc = (uint32_t)header;
 			int32_t offset = 0;
 			int32_t aligned_hole_start = 0;
@@ -91,6 +94,9 @@ int32_t find_first_hole(uint32_t size, uint8_t page_align, heap_t *heap)
 			} else {
 				if (header->size > size)
 				{
+					//fb_printf("Iteration: %d\n", iterator);
+					//fb_printf("AHS: %h\n", header->size);
+					//fb_printf("size: %h\n", size);
 					break;
 				}
 			}
@@ -119,16 +125,17 @@ void *alloc( uint32_t size, uint8_t page_align, heap_t *heap)
 		PANIC("Out of heap memory!");
 	}
 	heap_header_t *original_hole_header = (heap_header_t *)lookup_ordered_list(idx, &heap->index);
-	fb_printf("Found header at: %h", original_hole_header);
+	//fb_printf("Found header at: %h", original_hole_header);
 	uint32_t block_pos = original_hole_header;
 	uint32_t original_hole_size = original_hole_header->size;
 	//fb_printf("original_hole_size: %d", original_hole_size);
 	// do we split the hole?
 	if ((original_hole_size-gross_size) < (sizeof(heap_header_t) + sizeof(heap_footer_t)))
 	{
+		//fb_write("HIT!");
 		// not worth splitting, adjust requested size to hole size
 		gross_size = original_hole_header->size;
-		size = original_hole_header - sizeof(heap_header_t) + sizeof(heap_footer_t);
+		size = original_hole_header->size - sizeof(heap_header_t) + sizeof(heap_footer_t);
 	}
 	// If we need to page-align the data, do it now and make a new hole in front of our block.
 	if (page_align && (block_pos+sizeof(heap_header_t)) & ~0xFFFFF000)
@@ -156,13 +163,14 @@ void *alloc( uint32_t size, uint8_t page_align, heap_t *heap)
 	block_header->is_hole = 0;
 	block_header->size = gross_size;
 	block_header->magic = HEAP_MAGIC;
-	fb_printf("Block->size: %d", block_header->size);
+	//fb_printf("Block->size: %d", block_header->size);
 	// ... and footer
-	heap_footer_t *block_footer = (heap_footer_t *)(block_pos + size + sizeof(heap_header_t));
-	//fb_printf("block_footer: %h", block_footer);
-	block_footer->magic = HEAP_MAGIC;
-	block_footer->header_ptr = block_pos;
+	//fb_printf("block_footer->size: %h", size);
+	heap_footer_t *block_footer = (heap_footer_t *)(uint32_t)(block_pos + size + sizeof(heap_header_t));
 
+
+	block_footer->header_ptr = block_pos;
+	block_footer->magic = HEAP_MAGIC;
 	if ((original_hole_size - gross_size) > 0)
 	{
 		heap_header_t *post_header = (heap_header_t *)(block_pos + gross_size);
@@ -179,4 +187,62 @@ void *alloc( uint32_t size, uint8_t page_align, heap_t *heap)
 		insert_ordered_list((void *)post_header, &heap->index);
 	}
 	return (void *)(uint32_t)block_header + sizeof(heap_header_t);
+}
+void free(void* ptr, heap_t *heap)
+{
+	if (ptr==0)
+		return;
+
+	heap_header_t *header = (heap_header_t*)((uint32_t) ptr - sizeof(heap_header_t));
+	heap_footer_t *footer = (heap_footer_t*)((uint32_t) header + header->size - sizeof(heap_footer_t));
+	ASSERT(header->magic == HEAP_MAGIC);
+	ASSERT(footer->magic == HEAP_MAGIC);
+
+	header->is_hole = 1;
+	int8_t add_to_index = 1;
+
+	// check if we should merge left
+	heap_footer_t *pre_footer = (heap_footer_t*)((uint32_t)header - sizeof(heap_footer_t));
+	//fb_printf("pre_footer: %h", pre_footer);
+
+	if (pre_footer->magic == HEAP_MAGIC && pre_footer->header_ptr->is_hole == 1)
+	{
+		fb_write("PRE-SHOULD NOT BE HIT");
+		uint32_t original_block_size = header->size; // cache size of block we are freeing
+		header = pre_footer->header_ptr; // pre-header is now the new header
+		header->size += original_block_size; // add the size of block to the pre-header
+		footer->header_ptr = header; // make original footer point to pre-header
+		pre_footer->magic = 0; // remove the pre-footer
+		add_to_index = 0; // no need to add header to index, its already There
+	}
+	// check if we should merge right
+	heap_header_t *post_header = (heap_header_t*)((uint32_t)footer + sizeof(heap_footer_t));
+	//fb_printf("post_header: %h", post_header);
+	ASSERT(post_header->magic == HEAP_MAGIC);
+
+	if (post_header->magic == HEAP_MAGIC && post_header->is_hole == 1)
+	{
+		fb_write("POST-SHOULD NOT BE HIT");
+		header->size += post_header->size;
+		heap_footer_t *post_footer = (heap_footer_t*)((uint32_t)post_header + post_header->size - sizeof(heap_footer_t));
+		ASSERT(post_footer->magic == HEAP_MAGIC);
+		post_footer->header_ptr = header;
+		footer->magic = 0;
+		// we need to remove the index pointer to post_header
+		uint32_t i=0;
+		while (i < heap->index.size && lookup_ordered_list(i, &heap->index) != (void*)post_header)
+		{
+			i++;
+		}
+		ASSERT(i <= heap->index.size);
+		remove_ordered_list(i, &heap->index);
+	}
+	if (add_to_index == 1)
+	{
+		fb_printf("Adding header: %h", header);
+		//fb_printf("Heap index size: %d", heap->index.size);
+		insert_ordered_list((void*)header, &heap->index);
+		//fb_printf("Index after insert: %h", heap->index.list[0]);
+		//fb_printf("Heap index size: %d", heap->index.size);
+	}
 }

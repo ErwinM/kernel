@@ -24,32 +24,49 @@ ordered_list_t place_ordered_list(void *addr, uint32_t max_size, lessthan_predic
 
 void insert_ordered_list(void* item, ordered_list_t *ordered_list)
 {
+	//fb_printf("Inserting...\n",item);
 	ASSERT(ordered_list->less_than);
 	uint32_t i=0;
-	while (i < ordered_list->size && ordered_list->less_than(ordered_list->list[i], item))
+	while (i < ordered_list->size && ordered_list->list[i] < item)
 	{
 		i++;
 	}
 	if (i == ordered_list->size)
 	{
+		//fb_write("INSERT: adding to the back");
 		// just add it to the end of the list
+		//ordered_list->list[ordered_list->size++];
+
 		ordered_list->list[i] = item;
-		ordered_list->size += 1;
+		ordered_list->size++;
+		if ( item == 0xe08000 )
+		{
+			//fb_printf("Iterator: %d", i);
+			//fb_printf("Size: %d", ordered_list->size);
+			//fb_printf("index[i]: %h", ordered_list->list[i]);
+		}
 		//fb_printf("got item: %h", item);
-		//fb_printf("LOC: %h", &ordered_list->list[i]);
-		//fb_printf("Value: %h", ordered_list->list[i]);
+		//fb_printf("Iteratior: %d", i);
+		//fb_printf("Size: %d", ordered_list->size);
 	} else {
 		// insert the item at position i and shift all following items up once
 		// first shift the rest up once
+		fb_write("INSERT: inserting in front");
 		uint32_t k;
-		ordered_list->size += 1;
-		for (k = ordered_list->size ; k > i ; k--)
+		ordered_list->size++;
+		//fb_printf("starting loop with i: %d", i);
+		//fb_printf("and size: %d", ordered_list->size);
+		for (k = (ordered_list->size-1) ; k > i ; k--)
 		{
-			ordered_list[k] = ordered_list[k-1];
+			ordered_list->list[k] = ordered_list->list[k-1];
+			//fb_printf("inserting: %h", ordered_list->list[k-1]);
+			//fb_printf("in spot: %d", k);
 		}
 		ordered_list->list[i] = item;
 	}
+	//fb_printf("exiting insert with size: %d", ordered_list->size);
 }
+
 
 type_t lookup_ordered_list(uint32_t i, ordered_list_t *ordered_list)
 {
@@ -60,6 +77,7 @@ type_t lookup_ordered_list(uint32_t i, ordered_list_t *ordered_list)
 
 void remove_ordered_list(uint32_t item, ordered_list_t *ordered_list)
 {
+	//fb_write("Removing....\n");
 	while (item < ordered_list->size)
    {
        ordered_list->list[item] = ordered_list->list[item+1];

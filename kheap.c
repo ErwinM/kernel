@@ -69,9 +69,9 @@ int32_t find_first_hole(uint32_t size, uint8_t page_align, heap_t *heap)
 		while (iterator < heap->index.size)
 		{
 			uint32_t lookup = lookup_ordered_list(iterator, &heap->index);
-			fb_printf("Lookup ordered list returned: %h", lookup);
+			//fb_printf("Lookup ordered list returned: %h", lookup);
 			heap_header_t *header = (heap_header_t *)lookup_ordered_list(iterator, &heap->index);
-			fb_printf("Evaluating header at: %h", header);
+			//fb_printf("Evaluating header at: %h", header);
 			uint32_t loc = (uint32_t)header;
 			int32_t offset = 0;
 			int32_t aligned_hole_start = 0;
@@ -147,7 +147,7 @@ void *alloc( uint32_t size, uint8_t page_align, heap_t *heap)
 		aligned_block_header -= sizeof(heap_header_t);
 		heap_header_t *pre_hole_header = (heap_header_t *)block_pos;
 		pre_hole_header->size = aligned_block_header - block_pos;
-		fb_printf("PRE HOLE SIZE: %h", pre_hole_header->size);
+		//fb_printf("PRE HOLE SIZE: %h", pre_hole_header->size);
 		pre_hole_header->is_hole = 1;
 		pre_hole_header->magic = HEAP_MAGIC;
 		heap_footer_t *pre_hole_footer = (heap_footer_t *)((uint32_t)aligned_block_header - sizeof(heap_footer_t));
@@ -207,7 +207,7 @@ void free(void* ptr, heap_t *heap)
 
 	if (pre_footer->magic == HEAP_MAGIC && pre_footer->header_ptr->is_hole == 1)
 	{
-		fb_write("PRE-SHOULD NOT BE HIT");
+		//fb_write("PRE-SHOULD NOT BE HIT");
 		uint32_t original_block_size = header->size; // cache size of block we are freeing
 		header = pre_footer->header_ptr; // pre-header is now the new header
 		header->size += original_block_size; // add the size of block to the pre-header
@@ -222,7 +222,7 @@ void free(void* ptr, heap_t *heap)
 
 	if (post_header->magic == HEAP_MAGIC && post_header->is_hole == 1)
 	{
-		fb_write("POST-SHOULD NOT BE HIT");
+		//fb_write("POST-SHOULD NOT BE HIT");
 		header->size += post_header->size;
 		heap_footer_t *post_footer = (heap_footer_t*)((uint32_t)post_header + post_header->size - sizeof(heap_footer_t));
 		ASSERT(post_footer->magic == HEAP_MAGIC);
@@ -239,7 +239,7 @@ void free(void* ptr, heap_t *heap)
 	}
 	if (add_to_index == 1)
 	{
-		fb_printf("Adding header: %h", header);
+		//fb_printf("Adding header: %h", header);
 		//fb_printf("Heap index size: %d", heap->index.size);
 		insert_ordered_list((void*)header, &heap->index);
 		//fb_printf("Index after insert: %h", heap->index.list[0]);

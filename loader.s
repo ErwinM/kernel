@@ -32,6 +32,7 @@ loader:                         ; the loader label (defined as entry point in li
     call kmain
 
 .loop:
+		xchg	bx, bx								; Enter debug through magic Bochs breakpoint
     jmp .loop                   ; loop forever]]
 
 section .bss:

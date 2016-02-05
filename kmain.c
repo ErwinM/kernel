@@ -41,18 +41,6 @@ int kmain(void)
 	init_timer(50); // setup timer interrupt handler
 	// up till now paging is still off, lets turn it on
 	initpaging();
-  fb_write("Hello, paging world!\n");
-
-
-	uint32_t *a1 = alloc(8, 0, kheap);
-	fb_printf("a1: %h", a1);
-	uint32_t *b1 = alloc(8, 1, kheap);
-	fb_printf("b1: %h", b1);
-	uint32_t *c1 = alloc(8, 0, kheap);
-	fb_printf("c1: %h", c1);
-	//free(b1, kheap);
-	//uint32_t *c1 = alloc(7, 0, kheap);
-	//fb_printf("c1: %h", c1);
 
 	fb_write("finished.");
   return 0;

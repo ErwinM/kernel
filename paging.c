@@ -196,7 +196,6 @@ void mm_unmappage(unsigned long virt_address)
 void initpaging()
 {
 	fb_write("Initialising paging...\n");
-	kprintf("\n Physical location of kernel_page_dir pointer: %h", &kernel_page_dir);
 	// Size of physical memory; set at 16MB
 	uint32_t size_of_memory = 0x1000000;
 
@@ -244,28 +243,9 @@ void initpaging()
   // Now, enable paging!
 	fb_printf("Enabling paging by loading CR3 with: %h", kpd);
   switch_page_directory(kpd);
+	fb_write("..enabled.\n");
 	fb_init(1); // Redirect pointer to video memory
-//PANIC("HALT!");
 	kpd->pde[0] = 0; // free up first 1mb of linear memory space
-
-	//kprintf("\nINITPAGING: kernel_page_dir: %h", kernel_page_dir);
-	//kprintf("\nINITPAGING: kernel_page_dir[3]-1: %h", kernel_page_dir[3]);
-	// Initialise the kernel heap
-	fb_write("Initialising heap...");
-	// Map the heap memory to pages
-	int k;
-	for (k = KHEAP_START ; k < (KHEAP_START + 0x100000) ; k += 0x1000)
-	{
-		//fb_write("getting free page...");
-		uint32_t free_page = mm_allocphyspage();
-		//fb_write_hex(free_page);
-		mm_mappage(free_page, k);
-	}
-
-	fb_write("Allocated required pages...");
-		PANIC("HALT");
-	kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_SIZE, 1 ,1);
-	fb_write("enabled.");
 }
 
 void switch_page_directory(uint32_t *dir)

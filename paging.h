@@ -26,14 +26,14 @@ typedef struct __attribute__ ((packed)){
 
 typedef struct __attribute__ ((packed))
 {
-	uint32_t *pointers[1024];
-} page_dir_t, page_table_t;
+	uint32_t *pde[1024];
+} page_dir_t;
 
 /**
   Sets up the environment, page directories etc and
   enables paging.
 **/
-void initialise_paging();
+void initpaging();
 
 /**
   Causes the specified page directory to be loaded into the

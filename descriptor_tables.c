@@ -52,13 +52,9 @@ struct idt_entry idt[256];
 struct idt_ptr_struct idt_ptr;
 
 
-void init_descriptor_tables()
+void initgdt()
 {
-	init_gdt();
-	init_idt();
-}
-void init_gdt()
-{
+		fb_write("Setting up Global Descriptor Table...");
 		gdt_ptr.limit = (sizeof(struct gdt_entry) * 3) - 1; // 3 entries in our table
 		gdt_ptr.base = (uint32_t)&gdt;
 
@@ -67,6 +63,7 @@ void init_gdt()
 		gdt_set_entry(2, 0, 0xFFFFFFFF, 0x92, 0xcf);
 
 		gdt_flush((uint32_t)&gdt_ptr);
+		fb_write("Succes.\n");
 }
 
 static void gdt_set_entry( uint16_t entry_num, uint32_t base, uint32_t limit, uint8_t access_byte, uint8_t gran)
@@ -92,6 +89,8 @@ static void idt_set_entry( uint16_t entry_num, uint32_t base, uint16_t sel, uint
 
 void init_idt()
 {
+	fb_write("Setting up interrupt tables...");
+
 	idt_ptr.limit = (sizeof(struct idt_entry) * 256 ) - 1;
 	idt_ptr.base = (uint32_t)&idt;
 
@@ -161,4 +160,6 @@ void init_idt()
   idt_set_entry(47, (uint32_t)irq15, 0x08, 0x8E);
 
 	idt_flush((uint32_t)&idt_ptr);
+
+	fb_write("Success!\n");
 }

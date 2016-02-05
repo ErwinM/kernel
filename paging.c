@@ -13,21 +13,22 @@ extern heap_t *kheap;
 uint32_t placement_address = (uint32_t)&end;
 
 pageinfo mm_virtaddrtopageindex(uint32_t virtaddr);
-
-setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start);
+void setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start);
 
 // The kernel's page directory
+page_dir_t *kpd;
+//page_dir_t *current_page_dir;
+
 uint32_t *kernel_page_dir;
 uint32_t *current_page_dir;
 
-uint32_t *frames;
+uint32_t *frames; // pointer to the bitmap used to map frames
 uint32_t total_frames;
 
 uint32_t kmalloc(uint32_t size, int align)
 {
-	fb_printf("Placement address: %h", placement_address);
-	//fb_write("\nPlacement pointer: ");
-	//fb_write_hex(placement_address);
+	// Allocates memory starting directly at the end of loaded kernel
+	// This memory is permenantly allocated and cannot be freed!
 	if (align == 1 && (placement_address & ~0xFFFFF000)) // if address is not 4k-aligned
 	{
 		// Align it
@@ -35,11 +36,8 @@ uint32_t kmalloc(uint32_t size, int align)
 		placement_address += 0x1000;
 	}
 	uint32_t placed_at = placement_address;
-	fb_write(", Requested size: ");
-	fb_write_dec(size);
-	fb_write(", Placed at: ");
-	fb_write_hex(placed_at);
-	fb_write("\n");
+	kprintf("KMALLOC: requested: %d.", size);
+	kprintf(" Placed at: %h.\n", placed_at);
 	placement_address += size;
 	return placed_at;
 }
@@ -124,20 +122,25 @@ uint32_t mm_allocphyspage()
 	uint32_t phys_address = (idx * 0x1000);
 	set_frame(phys_address); // this frame is now ours!
 	//memset(phys_address, 0, 4096); // need to use virtual address!
-	//fb_write_hex(phys_address);
+	//kprintf("ALLOCPHYSPAGE: Allocated phys_addr: %h", phys_address);
 	return (phys_address);
 }
 
 uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
 {
-	//fb_write("mapping...");
+	kprintf("MAPPAGE: mapping phys: %h", phys_address);
+	kprintf(" to virt: %h.\n", virt_address);
+	kprintf("MAPPAGE: kernel_page_dir: %h", kpd);
 	pageinfo pginf = mm_virtaddrtopageindex(virt_address); // get the PDE and PTE indexes for the addr
-	//fb_write_dec(pginf.pagetable);
-  if(kernel_page_dir[pginf.pagetable] & 1)
+	kprintf("MAPPAGE: PT: %d", pginf.pagetable);
+	kprintf("kernel_page_dir[3]: %h", kpd->pde[pginf.pagetable]);
+	if(((uint32_t)kpd->pde[pginf.pagetable]) & 1)
 	{
       // page table exists.
+			fb_write("MAPPAGE: PT exists!");
       uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page table
-      if(!page_table[pginf.page] & 1)
+			kprintf("MAPPAGE: mapped PT address: %h", page_table);
+			if(!page_table[pginf.page] & 1)
 			{
           // page isn't mapped
           page_table[pginf.page] = phys_address | 3;
@@ -153,13 +156,14 @@ uint32_t mm_mappage(uint32_t phys_address, uint32_t virt_address)
 		else
 		{
 			// page table doesn't exist, so alloc a page and add into pdir
-      uint32_t *phys_addr_page_table = (uint32_t *) mm_allocphyspage();
+			fb_write("PT does not exist..");
+			uint32_t *phys_addr_page_table = (uint32_t *) mm_allocphyspage();
       uint32_t *page_table = (uint32_t *) (0xFFC00000 + (pginf.pagetable * 0x1000)); // virt addr of page tbl
 
-      kernel_page_dir[pginf.pagetable] = (uint32_t) phys_addr_page_table | 3; // add the new page table into the pdir
+      kpd->pde[pginf.pagetable] = (uint32_t) phys_addr_page_table | 3; // add the new page table into the pdir
       page_table[pginf.page] = phys_address | 3; // map the page!
   	}
-  return 1;
+	return 1;
 }
 
 void mm_unmappage(unsigned long virt_address)
@@ -189,8 +193,10 @@ void mm_unmappage(unsigned long virt_address)
   }
 }
 
-void initialise_paging()
+void initpaging()
 {
+	fb_write("Initialising paging...\n");
+	kprintf("\n Physical location of kernel_page_dir pointer: %h", &kernel_page_dir);
 	// Size of physical memory; set at 16MB
 	uint32_t size_of_memory = 0x1000000;
 
@@ -200,23 +206,21 @@ void initialise_paging()
 	frames = (uint32_t*)kmalloc_a(INDEX_FROM_BIT(total_frames));
 	memset(frames, 0, INDEX_FROM_BIT(total_frames));
 
-	// Setup the kernal page_directory
+	// Setup the kernal page_directory in critical memory region
 	fb_write("Allocating space for kernel_page_directory...\n");
-	uint32_t *kernel_page_dir = (uint32_t *)kmalloc_a(0x1000);
-	memset(kernel_page_dir, 0, 0x1000);
-	fb_printf("Address of kernel_page_directory: %h\n", kernel_page_dir);
+	kpd = (uint32_t *)kmalloc_a(0x1000);
+	memset(kpd, 0, 0x1000);
+	kprintf("Address of kernel_page_directory: %h\n", kpd);
 
 	fb_write("Allocate space for first page_table...\n");
 	uint32_t *first_page_table = (uint32_t *)kmalloc_a(0x1000);
-	kernel_page_dir[0] = first_page_table;
-	kernel_page_dir[0] += 0x3;
-	fb_printf("Address of first_page_directory: %h\n", kernel_page_dir[0]);
+	kpd->pde[0] = (uint32_t)first_page_table + 3;
+	fb_printf("Address of first_page_directory: %h\n", kpd->pde[0]);
 
 	fb_write("Allocate space for fourth page_table...");
 	uint32_t *third_page_table = (uint32_t *)kmalloc_a(0x1000);
-	kernel_page_dir[3] = third_page_table;
-	kernel_page_dir[3] += 0x3;
-	fb_printf("Address of first_page_directory: %h\n", kernel_page_dir[3]);
+	kpd->pde[3] = (uint32_t)third_page_table + 3;
+	fb_printf("Address of fourth_page_directory: %h\n", kpd->pde[3]);
 
 	fb_write("Identity mapping kernel memory...");
 	// Temporarily identity map first MB of physical memory or kernel will crash
@@ -231,41 +235,46 @@ void initialise_paging()
 	setup_pt(third_page_table, 256, 511, 0xd00000);
 
 	// Map  last 4mb of (max) virtual memory to page directory (recursive)
-	uint32_t kernel_dir_mask = (uint32_t)kernel_page_dir + 3;
-	kernel_page_dir[1023] = kernel_dir_mask;
+	uint32_t kernel_dir_mask = (uint32_t)kpd + 3;
+	kpd->pde[1023] = kernel_dir_mask;
 
 	// Before we enable paging, we must register our page fault handler.
   install_irq_handler(14, page_fault);
 
   // Now, enable paging!
-	fb_printf("Enabling paging by loading CR3 with: %h", kernel_page_dir);
-  switch_page_directory(kernel_page_dir);
+	fb_printf("Enabling paging by loading CR3 with: %h", kpd);
+  switch_page_directory(kpd);
 	fb_init(1); // Redirect pointer to video memory
-	//kernel_page_dir[0]=0; // free up first 1mb of linear memory space
+//PANIC("HALT!");
+	kpd->pde[0] = 0; // free up first 1mb of linear memory space
 
+	//kprintf("\nINITPAGING: kernel_page_dir: %h", kernel_page_dir);
+	//kprintf("\nINITPAGING: kernel_page_dir[3]-1: %h", kernel_page_dir[3]);
 	// Initialise the kernel heap
 	fb_write("Initialising heap...");
 	// Map the heap memory to pages
 	int k;
-	for (k = KHEAP_START ; k < (KHEAP_START + KHEAP_SIZE) ; k += 0x1000)
+	for (k = KHEAP_START ; k < (KHEAP_START + 0x20000) ; k += 0x1000)
 	{
 		//fb_write("getting free page...");
 		uint32_t free_page = mm_allocphyspage();
 		//fb_write_hex(free_page);
 		mm_mappage(free_page, k);
 	}
+
 	fb_write("Allocated required pages...");
+		PANIC("HALT");
 	kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_SIZE, 1 ,1);
 	fb_write("enabled.");
 }
 
 void switch_page_directory(uint32_t *dir)
 {
-    current_page_dir = dir;
+    //current_page_dir = dir;
     asm volatile("mov %0, %%cr3":: "r"(dir));
 		uint32_t cr0;
     asm volatile("mov %%cr0, %0": "=r"(cr0));
-    cr0 |= 0x80000000; // Enable paging!
+		cr0 |= 0x80000000; // Enable paging!
     asm volatile("mov %0, %%cr0":: "r"(cr0));
 }
 

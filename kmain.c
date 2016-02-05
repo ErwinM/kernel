@@ -12,13 +12,13 @@ int kmain(void)
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
   kvmalloc();      // kernel page table
   mpinit();        // collect info about this machine
-  lapicinit();
+  --lapicinit();
   seginit();       // set up segments
   cprintf("\ncpu%d: starting xv6\n\n", cpu->id);
   picinit();       // interrupt controller
-  ioapicinit();    // another interrupt controller
+  --ioapicinit();    // another interrupt controller
   consoleinit();   // I/O devices & their interrupts
-  uartinit();      // serial port
+  --uartinit();      // serial port
   pinit();         // process table
   tvinit();        // trap vectors
   binit();         // buffer cache
@@ -34,30 +34,13 @@ int kmain(void)
 }
 	*/
 	//const char *str = "erwin's first kernel";
+	fb_clear();  // screen
 	fb_init(0);
-	fb_clear();
-
-
-
-
-	fb_write("Setting up Global Descriptor Table...");
-	init_gdt();
-	fb_write("Success!\n");
-
-	fb_write("Setting up Interrupt Descriptor Table...");
-	init_idt();
-	fb_write("Success!\n");
-
-	//asm volatile ("int $0x3");
-	//asm volatile ("int $0x4");
-
-
-	fb_write("Initialising timer...");
-	init_timer(50);
-	fb_write("Success!\n");
-
-	fb_write("Initialising paging...\n");
-	initialise_paging();
+	initgdt();  // setup gdt
+	init_idt(); // setup the interrup tables
+	init_timer(50); // setup timer interrupt handler
+	// up till now paging is still off, lets turn it on
+	initpaging();
   fb_write("Hello, paging world!\n");
 
 

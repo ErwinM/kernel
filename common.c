@@ -21,7 +21,6 @@ extern void panic(const char *message, const char *file, uint32_t line)
 {
     // We encountered a massive problem and have to stop.
     asm volatile("cli"); // Disable interrupts.
-
     fb_write("PANIC(");
     fb_write(message);
     fb_write(") at ");
@@ -29,9 +28,8 @@ extern void panic(const char *message, const char *file, uint32_t line)
     fb_write(":");
     fb_write_dec(line);
     fb_write("\n");
-    // Halt by going into an infinite loop.
-    for(;;);
-}
+    // trigger Bochs debug mode (magic instruction)
+		asm volatile("xchg %bx, %bx");}
 
 extern void panic_assert(const char *file, uint32_t line, const char *desc)
 {
@@ -45,6 +43,7 @@ extern void panic_assert(const char *file, uint32_t line, const char *desc)
     fb_write(":");
     fb_write_dec(line);
     fb_write("\n");
-    // Halt by going into an infinite loop.
-    for(;;);
+    // trigger Bochs debug mode (magic instruction)
+		asm volatile("xchg %bx, %bx");
+		//for(;;);
 }

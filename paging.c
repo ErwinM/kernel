@@ -254,7 +254,7 @@ void initpaging()
 	fb_write("Initialising heap...");
 	// Map the heap memory to pages
 	int k;
-	for (k = KHEAP_START ; k < (KHEAP_START + 0x20000) ; k += 0x1000)
+	for (k = KHEAP_START ; k < (KHEAP_START + 0x100000) ; k += 0x1000)
 	{
 		//fb_write("getting free page...");
 		uint32_t free_page = mm_allocphyspage();

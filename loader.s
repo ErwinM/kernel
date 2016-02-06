@@ -1,4 +1,3 @@
-global loader                   ; the entry symbol for ELF
 GRUB_MAGIC_NUMBER equ 0x1BADB002     ; define the magic number constant
 GRUB_FLAGS        equ 0x0            ; multiboot flags
 GRUB_CHECKSUM     equ -GRUB_MAGIC_NUMBER  ; calculate the checksum
@@ -25,15 +24,20 @@ mboot:
     dd  end                     ; End of kernel.
     dd  loader                  ; Kernel entry point (initial EIP).
 
+
+global loader                   ; the entry symbol for ELF
+extern kmain
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, kernel_stack + KERNEL_STACK_SIZE
+		push ebx
+		sti
+		;xchg bx, bx
 
-    extern kmain
     call kmain
 
 .loop:
-		xchg	bx, bx								; Enter debug through magic Bochs breakpoint
-    jmp .loop                   ; loop forever]]
+		;xchg	bx, bx								; Enter debug through magic Bochs breakpoint
+    jmp .loop                   ; loop forever
 
 section .bss:
 align 4

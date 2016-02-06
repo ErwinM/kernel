@@ -53,7 +53,7 @@ isr%1:
 	cli
 	push byte 0		; push a dummy error code
 	push byte %1		; push the interrup number
-	jmp isr_common_stub
+	jmp alltraps
 %endmacro
 
 %macro ISR_WITHERRORCODE 1
@@ -61,7 +61,7 @@ global isr%1
 isr%1:
 	cli
 	push byte %1		; only push interrupt number, error code has already been pushed
-	jmp isr_common_stub
+	jmp alltraps
 %endmacro
 
 ; This macro creates a stub for an IRQ - the first parameter is
@@ -72,7 +72,7 @@ irq%1:
 	cli
 	push byte 0
 	push byte %2
-	jmp irq_common_stub
+	jmp alltraps
 %endmacro
 
 ; now use the macro's to define the right handlers
@@ -126,62 +126,73 @@ IRQ  14,    46
 IRQ  15,    47
 
 ; In isr.c
-extern fault_handler
-extern irq_handler
+extern trap
+;extern irq_handler
 
 ; This is our common ISR stub. It saves the processor state, sets
 ; up for kernel mode segments, calls the C-level fault handler,
 ; and finally restores the stack frame.
-isr_common_stub:
-   pusha              ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+alltraps:
+  ; Build trap frame.
+  push ds
+  push es
+  push fs
+  push gs
+  pusha
 
-   mov ax, ds         ; Lower 16-bits of eax = ds.
-   push eax           ; save the data segment descriptor
+  ; Set up data and per-cpu segments.
+  mov ax, 0x10
+  mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
 
-   mov ax, 0x10  			; load the kernel data segment descriptor
-   mov ds, ax
-   mov es, ax
-   mov fs, ax
-   mov gs, ax
+  ; Call trap(tf), where tf=%esp
+  push esp
+  call trap
+  add esp, 4
 
-	 call fault_handler
-
-   pop eax        		; reload the original data segment descriptor
-   mov ds, ax
-   mov es, ax
-   mov fs, ax
-   mov gs, ax
-
-   popa               ; Pops edi,esi,ebp...
-   add esp, 8     		; Cleans up the pushed error code and pushed ISR number
-   sti
-   iret           		; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
-
+  ; Return falls through to trapret...
+global trapret
+trapret:
+  popa
+  pop gs
+  pop fs
+  pop es
+  pop ds
+  add esp, 0x8  ; trapno and errcode
+	sti
+  iret
 
  ; This is our common IRQ stub. It saves the processor state, sets
  ; up for kernel mode segments, calls the C-level fault handler,
  ; and finally restores the stack frame.
  irq_common_stub:
-    pusha                    ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
+	 ; Build trap frame.
+	 push ds
+	 push es
+	 push fs
+	 push gs
+	 pusha
 
-    mov ax, ds               ; Lower 16-bits of eax = ds.
-    push eax                 ; save the data segment descriptor
+	 ; Set up data and per-cpu segments.
+	 mov ax, 0x10
+	 mov ds, ax
+	 mov es, ax
+	 mov fs, ax
+	 mov gs, ax
 
-    mov ax, 0x10  ; load the kernel data segment descriptor
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+	 ; Call trap(tf), where tf=%esp
+	 push esp
+	 call trap
+	 add esp, 4
 
-    call irq_handler
-
-    pop ebx        ; reload the original data segment descriptor
-    mov ds, bx
-    mov es, bx
-    mov fs, bx
-    mov gs, bx
-
-    popa                     ; Pops edi,esi,ebp...
-    add esp, 8     ; Cleans up the pushed error code and pushed ISR number
-    sti
-    iret           ; pops 5 things at once: CS, EIP, EFLAGS, SS, and ESP
+	 ; Return falls through to trapret...
+	 popa
+	 pop gs
+	 pop fs
+	 pop es
+	 pop ds
+	 add esp, 0x8  ; trapno and errcode
+	 sti
+	 iret

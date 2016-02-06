@@ -2,25 +2,21 @@
 // Written for JamesM's kernel development tutorials.
 
 #include "timer.h"
-#include "isr.h"
 #include "write.h"
 
 uint32_t tick = 0;
 
-static void timer_callback(regs_t regs)
+void timer_callback()
 {
-	regs_t DUMMY = regs;
 	tick++;
-	//fb_write("Tick: ");
-	//fb_write_dec(tick);
-	//fb_write("\n");
+	//kprintf("Tick: %d\n", tick);
 }
 
 void init_timer(uint32_t frequency)
 {
 	fb_write("Initialising timer...");
   // Firstly, register our timer callback.
-	install_irq_handler(0, &timer_callback);
+	//install_irq_handler(0, &timer_callback);
 
 	// The value we send to the PIT is the value to divide it's input clock
 	// (1193180 Hz) by, to get our required frequency. Important to note is

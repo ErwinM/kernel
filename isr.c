@@ -5,7 +5,7 @@
 	*/
 
 #include "common.h"
-#include "isr.h"
+#include "trap.h"
 #include "write.h"
 
 isr_t interrupt_handlers[256];

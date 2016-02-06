@@ -4,7 +4,7 @@
 
 #include "paging.h"
 #include "common.h"
-#include "isr.h"
+//#include "isr.h"
 #include "write.h"
 #include "kheap.h"
 
@@ -238,7 +238,7 @@ void initpaging()
 	kpd->pde[1023] = kernel_dir_mask;
 
 	// Before we enable paging, we must register our page fault handler.
-  install_irq_handler(14, page_fault);
+  //install_irq_handler(14, page_fault);
 
   // Now, enable paging!
 	fb_printf("Enabling paging by loading CR3 with: %h", kpd);
@@ -258,7 +258,7 @@ void switch_page_directory(uint32_t *dir)
     asm volatile("mov %0, %%cr0":: "r"(cr0));
 }
 
-void page_fault(regs_t regs)
+void page_fault(uint32_t err)
 {
    // A page fault has occurred.
    // The faulting address is stored in the CR2 register.
@@ -266,11 +266,11 @@ void page_fault(regs_t regs)
    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 
    // The error code gives us details of what happened.
-   int present   = !(regs.err_code & 0x1); // Page not present
-   int rw = regs.err_code & 0x2;           // Write operation?
-   int us = regs.err_code & 0x4;           // Processor was in user-mode?
-   int reserved = regs.err_code & 0x8;     // Overwritten CPU-reserved bits of page entry?
-   int id = regs.err_code & 0x10;          // Caused by an instruction fetch?
+   int present   = !(err & 0x1); // Page not present
+   int rw = err & 0x2;           // Write operation?
+   int us = err & 0x4;           // Processor was in user-mode?
+   int reserved = err & 0x8;     // Overwritten CPU-reserved bits of page entry?
+   int id = err & 0x10;          // Caused by an instruction fetch?
 
    // Output an error message.
    fb_write("Page fault! ( ");

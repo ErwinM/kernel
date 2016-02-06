@@ -2,8 +2,8 @@
 	* Defines the strucures for memory management, including paging
 	*/
 
-#ifndef INCLUDE_MEMORY_H
-#define INCLUDE_MEMORY_H
+#ifndef INCLUDE_PAGING_H
+#define INCLUDE_PAGING_H
 
 #include "common.h"
 
@@ -29,6 +29,8 @@ typedef struct __attribute__ ((packed))
 	uint32_t *pde[1024];
 } page_dir_t;
 
+uint32_t mm_allocphyspage();
+
 /**
   Sets up the environment, page directories etc and
   enables paging.
@@ -44,6 +46,6 @@ void switch_page_directory(uint32_t *new);
 /**
   Handler for page faults.
 **/
-void page_fault(regs_t regs);
+void page_fault(uint32_t err);
 
 #endif

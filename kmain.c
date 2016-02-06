@@ -5,7 +5,7 @@
 
 extern *kheap;
 
-int kmain(void)
+int kmain(struct multiboot *mboot_ptr)
 {
 	/**
 	{
@@ -39,9 +39,10 @@ int kmain(void)
 	initgdt();  // setup gdt
 	init_idt(); // setup the interrup tables
 	init_timer(50); // setup timer interrupt handler
+
 	// up till now paging is still off, lets turn it on
 	initpaging();
-
 	fb_write("finished.");
-  return 0;
+
+	return 0;
 }

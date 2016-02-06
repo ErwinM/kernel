@@ -1,8 +1,7 @@
 
 
 
-#define KHEAP_START       0xE00000
-#define KHEAP_SIZE  			0x2000
+
 #define HEAP_INDEX_SIZE   0x2000
 #define HEAP_MAGIC        0xDEADBABE
 #define HEAP_MIN_SIZE     0x0 // not used in first version

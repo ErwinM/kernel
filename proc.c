@@ -53,7 +53,7 @@ found:
 	p->context->eip = (uint32_t)forkret;
 	return p;
 }
-
+/*
 // Set up first user process. Copied from xv6
 void userinit(void)
 {
@@ -64,7 +64,7 @@ void userinit(void)
   initproc = p;
   if((p->pgdir = setupkvm()) == 0) // we need to implement this
     panic("userinit: out of memory?");
-/*
+
 	inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
   p->sz = PGSIZE;
   memset(p->tf, 0, sizeof(*p->tf));
@@ -80,9 +80,9 @@ void userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
-	*/
+	
 }
-
+*/
 // A fork child's very first scheduling by scheduler()
 // will swtch here.  "Return" to user space.
 void forkret(void)

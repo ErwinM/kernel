@@ -6,10 +6,9 @@
 #include "common.h"
 //#include "isr.h"
 #include "write.h"
-#include "kheap.h"
+#include "alloc.h"
 
 extern uint32_t end;
-extern heap_t *kheap;
 uint32_t placement_address = (uint32_t)&end;
 
 pageinfo mm_virtaddrtopageindex(uint32_t virtaddr);
@@ -170,14 +169,13 @@ void mm_unmappage(unsigned long virt_address)
 {
 	pageinfo pginf = mm_virtaddrtopageindex(virt_address);
 
-  if(kernel_page_dir[pginf.pagetable] & 1)
-	{
+  if((uint32_t)kpd->pde[pginf.pagetable] & 1){
     int i;
     unsigned long *page_table = (unsigned long *) (0xFFC00000 + (pginf.pagetable * 0x1000));
-    if(page_table[pginf.page] & 1)
-		{
-        // page is mapped, so unmap it
+    if(page_table[pginf.page] & 1){
+        // page is mapped, so unmap it and free the pysical page
         page_table[pginf.page] = 2; // r/w, not present
+				clear_frame(page_table[pginf.page] & 0xFFFFF000);
   	}
 
 	  // check if there are any more present PTEs in this page table
@@ -187,8 +185,8 @@ void mm_unmappage(unsigned long virt_address)
 
     // if there are none, then free the space allocated to the page table and delete mappings
     if(i == 1024){
-      //  mm_freephyspage(kernel_page_dir[pginf.pagetable] & 0xFFFFF000);
-        kernel_page_dir[pginf.pagetable] = 2;
+        clear_frame(kernel_page_dir[pginf.pagetable] & 0xFFFFF000);
+        kpd->pde[pginf.pagetable] = 2;
     }
   }
 }
@@ -245,7 +243,15 @@ void initpaging()
   switch_page_directory(kpd);
 	fb_write("..enabled.\n");
 	fb_init(1); // Redirect pointer to video memory
-	kpd->pde[0] = 0; // free up first 1mb of linear memory space
+
+
+	// Create some kind of kernel heap; without it you get stuck quickly
+	initkheap();
+
+	// Finish setting up the initial kernel address space. Paging is enabled
+	// so we can use proper functions
+	//kpd->pde[0] = 0; // free up first 1mb of linear memory space
+
 }
 
 void switch_page_directory(uint32_t *dir)
@@ -295,3 +301,17 @@ void setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t phy
 		physical_start += 0x1000;
 	}
 }
+
+/*
+void setupkvm()
+{
+// setup a new pgdir
+	page_dir_t *pgdir;
+	pgdir =
+
+	setup a page_table
+	map page table in pgdir
+	map kernel space in pagetable
+}
+
+*/

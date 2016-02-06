@@ -2,8 +2,7 @@
 #include "write.h"
 #include "descriptor_tables.h"
 #include "ordered_list.h"
-
-extern *kheap;
+#include "alloc.h"
 
 int kmain(struct multiboot *mboot_ptr)
 {
@@ -42,6 +41,16 @@ int kmain(struct multiboot *mboot_ptr)
 
 	// up till now paging is still off, lets turn it on
 	initpaging();
+
+	uint32_t *a = kallocpage();
+	kprintf("a: %h", a);
+	uint32_t *b = kallocpage();
+	kprintf("b: %h", b);
+	kfree(a);
+	uint32_t *c = kallocpage();
+	kprintf("c: %h", c);
+	uint32_t *d = kallocpage();
+	kprintf("d: %h", d);
 
 	fb_write("EXECUTION FINISHED.\n");
 	return 0;

@@ -36,7 +36,7 @@ found:
 	p->state = EMBRYO;
 	p->pid = nextpid++;
 	// allocate memory for kernel_stack
-	if ((p->kstack = KSTACK_BOTTOM) == 0) // should use allocpys to see if there is atleast one free page
+	if ((p->kstack = kalloc()) == 0)
 		PANIC("ALLOCPROC: out of memory!");
 	sp = p->kstack + KSTACK_SIZE;
 	// leave room for the trapframe
@@ -80,7 +80,7 @@ void userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
-	
+
 }
 */
 // A fork child's very first scheduling by scheduler()

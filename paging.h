@@ -27,7 +27,9 @@ typedef struct __attribute__ ((packed)){
 typedef struct __attribute__ ((packed))
 {
 	uint32_t *pde[1024];
-} page_dir_t;
+} page_dir_t, pgdir_t, pgtable_t;
+
+typedef uint32_t pte_t;
 
 uint32_t mm_allocphyspage();
 

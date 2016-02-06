@@ -9,6 +9,8 @@
 #include "spinlock.h"
 #include "mmu.h"
 
+extern page_dir_t *kpd;
+
 struct chunk {
   struct chunk *next;
 };
@@ -22,16 +24,9 @@ struct {
 
 void initkheap()
 {
-	// Map some pages
-	int k;
-	for (k = KHEAP_START ; (k + PGSIZE) <= KHEAP_END ; k += 0x1000){
-		uint32_t freepg = mm_allocphyspage();
-		mm_mappage(freepg, k);
-	}
-	fb_write("heap mapped!");
 	// Build the free list
 	freerange(KHEAP_START, KHEAP_END);
-	kprintf("Freelist: %h", kmem.freelist);
+	fb_write("kheap: done.\n");
 }
 
 void freerange(uint32_t *start, uint32_t *end)
@@ -41,9 +36,10 @@ void freerange(uint32_t *start, uint32_t *end)
 		kprintf("end: %h\n", end);
 		PANIC("freerange: memory not in heap!");
 	}
-	if ((uint32_t)end & ~0xFFFFF000)
+	if ((uint32_t)end & ~0xFFFFF000){
+		kprintf("End address: %h", end);
 		PANIC("freerange: end not page aligned!");
-
+	}
 	int k;
 	for( k = (end - PGSIZE) ; k >= start ; k -= PGSIZE){
 		kfree(k);
@@ -61,9 +57,10 @@ void kfree(uint32_t *address)
 	c = (struct chunk*) address;
 	c->next = kmem.freelist;
 	kmem.freelist = c;
+	kprintf("Freed: %h", c);
 }
 
-uint32_t *kallocpage()
+uint32_t *kalloc()
 {
 	struct chunk *c;
 	c = kmem.freelist;

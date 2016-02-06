@@ -284,7 +284,7 @@ void page_fault(uint32_t err)
    PANIC("Page fault");
 }
 
-setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start)
+void setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start)
 {
 	while (index_start <= index_end)
 	{

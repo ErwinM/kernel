@@ -113,7 +113,7 @@ int32_t find_first_hole(uint32_t size, uint8_t page_align, heap_t *heap)
 		}
 }
 
-void *alloc( uint32_t size, uint8_t page_align, heap_t *heap)
+void *HEAPalloc( uint32_t size, uint8_t page_align, heap_t *heap)
 {
 	// lets ignore page alignment intially....
 	uint32_t gross_size = size + sizeof(heap_header_t) + sizeof(heap_footer_t);
@@ -188,7 +188,7 @@ void *alloc( uint32_t size, uint8_t page_align, heap_t *heap)
 	}
 	return (void *)(uint32_t)block_header + sizeof(heap_header_t);
 }
-void free(void* ptr, heap_t *heap)
+void HEAPfree(void* ptr, heap_t *heap)
 {
 	if (ptr==0)
 		return;

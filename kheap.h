@@ -32,5 +32,5 @@ typedef struct
 	uint8_t read_only;
 } heap_t;
 
-void *alloc( uint32_t size, uint8_t page_align, heap_t *heap);
-void free(void* ptr, heap_t *heap);
+void *HEAPalloc( uint32_t size, uint8_t page_align, heap_t *heap);
+void HEAPfree(void* ptr, heap_t *heap);

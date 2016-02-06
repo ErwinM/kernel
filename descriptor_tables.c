@@ -6,6 +6,8 @@
 #include "common.h"
 #include "kernel.h"
 #include "descriptor_tables.h"
+#include "mem_layout.h"
+#include "mmu.h"
 
 static void gdt_set_entry( uint16_t entry_num, uint32_t limit, uint32_t base, uint8_t access_byte, uint8_t gran);
 static void idt_set_entry( uint16_t entry_num, uint32_t base, uint16_t sel, uint8_t access_byte );
@@ -43,7 +45,7 @@ struct idt_ptr_struct
 
 /* Set up scaffolding for 3 gdt entries */
 /* and the special GDT pointer */
-struct gdt_entry gdt[3];
+struct gdt_entry gdt[5];
 struct gdt_ptr_struct gdt_ptr;
 
 /* Setup 256 entries for the IDT */
@@ -55,12 +57,15 @@ struct idt_ptr_struct idt_ptr;
 void initgdt()
 {
 		fb_write("Setting up Global Descriptor Table...");
-		gdt_ptr.limit = (sizeof(struct gdt_entry) * 3) - 1; // 3 entries in our table
+		gdt_ptr.limit = (sizeof(struct gdt_entry) * 5) - 1; // 5 entries in our table
 		gdt_ptr.base = (uint32_t)&gdt;
 
 		gdt_set_entry(0, 0, 0, 0, 0);
-		gdt_set_entry(1, 0, 0xFFFFFFFF, 0x9a, 0xcf);
-		gdt_set_entry(2, 0, 0xFFFFFFFF, 0x92, 0xcf);
+		gdt_set_entry(SEG_KCODE, 0, 0xFFFFFFFF, 0x9a, 0xcf);
+		gdt_set_entry(SEG_KDATA, 0, 0xFFFFFFFF, 0x92, 0xcf);
+		gdt_set_entry(SEG_UCODE, 0, 0xFFFFFFFF, 0xFa, 0xcf);
+		gdt_set_entry(SEG_UDATA, 0, 0xFFFFFFFF, 0xF2, 0xcf);
+		// todo: add TSSseg
 
 		gdt_flush((uint32_t)&gdt_ptr);
 		fb_write("Succes.\n");

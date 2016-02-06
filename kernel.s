@@ -93,7 +93,7 @@ ISR_WITHERRORCODE 13
 ISR_WITHERRORCODE 14
 ISR_NOERRORCODE 15
 ISR_NOERRORCODE 16
-ISR_NOERRORCODE 17
+ISR_WITHERRORCODE 17
 ISR_NOERRORCODE 18
 ISR_NOERRORCODE 19
 ISR_NOERRORCODE 20
@@ -161,38 +161,4 @@ trapret:
   pop es
   pop ds
   add esp, 0x8  ; trapno and errcode
-	sti
   iret
-
- ; This is our common IRQ stub. It saves the processor state, sets
- ; up for kernel mode segments, calls the C-level fault handler,
- ; and finally restores the stack frame.
- irq_common_stub:
-	 ; Build trap frame.
-	 push ds
-	 push es
-	 push fs
-	 push gs
-	 pusha
-
-	 ; Set up data and per-cpu segments.
-	 mov ax, 0x10
-	 mov ds, ax
-	 mov es, ax
-	 mov fs, ax
-	 mov gs, ax
-
-	 ; Call trap(tf), where tf=%esp
-	 push esp
-	 call trap
-	 add esp, 4
-
-	 ; Return falls through to trapret...
-	 popa
-	 pop gs
-	 pop fs
-	 pop es
-	 pop ds
-	 add esp, 0x8  ; trapno and errcode
-	 sti
-	 iret

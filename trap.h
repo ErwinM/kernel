@@ -46,7 +46,4 @@
 #define IRQ_ERROR       19
 #define IRQ_SPURIOUS    31
 
-typedef void (*isr_t)(registers_t);
-void install_irq_handler(int irq, isr_t handler);
-
 #endif

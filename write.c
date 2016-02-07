@@ -15,7 +15,7 @@ void fb_init(uint8_t mapped_to_himem)
 	if (mapped_to_himem)
 	{
 		fb_write("true");
-		vidptr = (unsigned short *)0xCB8000; 	//video mem is mapped to here
+		vidptr = (unsigned short *)0x4B8000; 	//video mem is mapped to here
 	}
 	//PANIC("HALT");
 		kprintf("Vidptr is: %h\n", vidptr);

@@ -5,8 +5,6 @@
 #include "mem_layout.h"
 #include "mmu.h"
 #include "param.h"
-#include "vm.h"
-#include "paging.h"
 
 
 extern void forkret(void);

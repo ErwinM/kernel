@@ -146,6 +146,11 @@ struct segdesc {
 #define PTE_PS          0x080   // Page Size
 #define PTE_MBZ         0x180   // Bits must be zero
 
+typedef struct {
+    int pagetable;
+    int page;
+}pageinfo, *ppageinfo;
+
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((uint32_t)(pte) & ~0xFFF)
 #define PTE_FLAGS(pte)  ((uint32_t)(pte) &  0xFFF)

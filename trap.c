@@ -1,8 +1,7 @@
-
+#include "defs.h"
 #include "trap.h"
 #include "x86.h"
 #include "timer.h"
-#include "paging.h"
 
 void trap(struct trapframe *tf)
 {

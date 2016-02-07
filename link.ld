@@ -1,7 +1,7 @@
 ENTRY(loader)                /* the name of the entry label */
 
 SECTIONS {
-    . = 0xd00000;          /* the code should be loaded at 1 MB */
+    . = 0x500000;          /* the code should be loaded at 5 MB */
 
     .text ALIGN (0x1000) :   /* align at 4 KB */
     {

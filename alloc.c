@@ -3,11 +3,12 @@
  * becomes very hard (TM).
  */
 
-#include "paging.h"
 #include "mem_layout.h"
 #include "param.h"
 #include "spinlock.h"
 #include "mmu.h"
+
+extern uint32_t end;
 
 struct chunk {
   struct chunk *next;
@@ -19,6 +20,29 @@ struct {
   struct chunk *freelist;
 } kmem;
 
+uint32_t placement_address = (uint32_t)&end;
+
+// Allocates memory starting directly at the end of loaded kernel
+// This memory is permenantly allocated and cannot be freed!
+uint32_t* kmalloc(uint32_t size, int align)
+{
+	if (align == 1 && (placement_address & ~0xFFFFF000)) // if address is not 4k-aligned
+	{
+		// Align it
+		placement_address &= 0xFFFFF000;
+		placement_address += 0x1000;
+	}
+	uint32_t placed_at = placement_address;
+	kprintf("KMALLOC: requested: %d.", size);
+	kprintf(" Placed at: %h.\n", placed_at);
+	placement_address += size;
+	return placed_at;
+}
+
+uint32_t* kmalloc_a(uint32_t size)
+{
+	return kmalloc(size, 1);
+}
 
 void initkheap()
 {

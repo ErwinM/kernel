@@ -1,3 +1,9 @@
+#ifndef INCLUDE_MMU_H
+#define INCLUDE_MMU_H
+
+#include "common.h"
+
+
 // This file contains definitions for the
 // x86 memory management unit (MMU).
 
@@ -145,6 +151,7 @@ struct segdesc {
 #define PTE_FLAGS(pte)  ((uint32_t)(pte) &  0xFFF)
 
 #ifndef __ASSEMBLER__
+
 typedef uint32_t pte_t;
 
 // Task state segment format
@@ -223,4 +230,5 @@ struct gatedesc {
   (gate).off_31_16 = (uint32_t)(off) >> 16;                  \
 }
 
+#endif
 #endif

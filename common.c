@@ -17,6 +17,39 @@ void memcpy(uint16_t *dest, uint16_t *src, uint32_t len)
   for(; len != 0; len--) *dp++ = *sp++;
 }
 
+void* memmove(void *dst, const void *src, uint32_t n)
+{
+  const char *s;
+  char *d;
+
+  s = src;
+  d = dst;
+  if(s < d && s + n > d){
+    s += n;
+    d += n;
+    while(n-- > 0)
+      *--d = *--s;
+  } else
+    while(n-- > 0)
+      *d++ = *s++;
+
+  return dst;
+}
+
+// Like strncpy but guaranteed to NUL-terminate.
+char* safestrcpy(char *s, const char *t, int n)
+{
+  char *os;
+
+  os = s;
+  if(n <= 0)
+    return os;
+  while(--n > 0 && (*s++ = *t++) != 0)
+    ;
+  *s = 0;
+  return os;
+}
+
 extern void panic(const char *message, const char *file, uint32_t line)
 {
     // We encountered a massive problem and have to stop.

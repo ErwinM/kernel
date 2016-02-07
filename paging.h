@@ -24,30 +24,12 @@ typedef struct __attribute__ ((packed)){
     int page;
 }pageinfo, *ppageinfo;
 
-typedef struct __attribute__ ((packed))
-{
-	uint32_t *pde[1024];
-} page_dir_t, pgdir_t, pgtable_t;
-
-typedef uint32_t pte_t;
-
 uint32_t mm_allocphyspage();
 
-/**
-  Sets up the environment, page directories etc and
-  enables paging.
-**/
 void initpaging();
 
-/**
-  Causes the specified page directory to be loaded into the
-  CR3 register.
-**/
 void switch_page_directory(uint32_t *new);
 
-/**
-  Handler for page faults.
-**/
 void page_fault(uint32_t err);
 
 #endif

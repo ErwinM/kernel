@@ -30,7 +30,6 @@ extern kmain
 loader:                         ; the loader label (defined as entry point in linker script)
     mov esp, kernel_stack + KERNEL_STACK_SIZE
 		push ebx
-		sti
 		;xchg bx, bx
 
     call kmain

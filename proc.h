@@ -5,6 +5,9 @@
 
 #include "common.h"
 #include "x86.h"
+#include "mmu.h"
+#include "param.h"
+#include "mem_layout.h"
 
 // Saved registers for kernel context switches.
 // Don't need to save all the segment registers (%cs, etc),
@@ -24,6 +27,20 @@ struct context {
   uint32_t eip;
 };
 
+struct cpu {
+  //uchar id;                    // Local APIC ID; index into cpus[] below
+  struct context *scheduler;   // swtch() here to enter scheduler
+  struct taskstate ts;         // Used by x86 to find stack for interrupt
+  struct segdesc gdt[NSEGS];   // x86 global descriptor table
+  //volatile uint started;       // Has the CPU started?
+  int ncli;                    // Depth of pushcli nesting.
+  int intena;                  // Were interrupts enabled before pushcli?
+
+  // Cpu-local storage variables; see below
+  struct cpu *cpu;
+  struct proc *proc;           // The currently-running process.
+};
+
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
@@ -41,7 +58,10 @@ struct proc {
   //struct file *ofile[NOFILE];  // Open files
   //struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
 };
+
+void userinit(void);
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

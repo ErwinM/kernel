@@ -45,16 +45,19 @@ struct idt_ptr_struct
 
 /* Set up scaffolding for 3 gdt entries */
 /* and the special GDT pointer */
-struct gdt_entry gdt[5];
+
+//struct segdesc gdt[NSEGS];
+//struct gdt_entry gdt[5];
 struct gdt_ptr_struct gdt_ptr;
+//struct cpu mcpu;
 
 /* Setup 256 entries for the IDT */
 /* and the special pointer */
 struct idt_entry idt[256];
 struct idt_ptr_struct idt_ptr;
 
-
-void initgdt()
+/*
+void initgdtOLD()
 {
 		fb_write("Setting up Global Descriptor Table...");
 		gdt_ptr.limit = (sizeof(struct gdt_entry) * 5) - 1; // 5 entries in our table
@@ -82,7 +85,7 @@ static void gdt_set_entry( uint16_t entry_num, uint32_t base, uint32_t limit, ui
 	gdt[entry_num].limit_high_and_flags |= (gran & 0xF0);
 	gdt[entry_num].access_byte = access_byte;
 }
-
+*/
 static void idt_set_entry( uint16_t entry_num, uint32_t base, uint16_t sel, uint8_t access_byte )
 {
 	idt[entry_num].base_low = (base & 0xFFFF);

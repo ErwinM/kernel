@@ -43,6 +43,9 @@ typedef struct registers
 void memcpy(uint16_t *dest, uint16_t *src, uint32_t len);
 void memset(uint8_t *dest, uint8_t val, uint32_t len);
 
+void* memmove(void *dst, const void *src, uint32_t n);
+char* safestrcpy(char *s, const char *t, int n);
+
 #define PANIC(msg) panic(msg, __FILE__, __LINE__);
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b));
 

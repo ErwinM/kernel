@@ -16,4 +16,6 @@
 
 #define PHYSTOP 0x1000000           // Top physical memory
 
+#define NSEGS	5
+
 #endif

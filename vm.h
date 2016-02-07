@@ -3,8 +3,8 @@
 
 #include "paging.h"
 
-page_dir_t* setupkvm();
+pte_t* setupkvm();
 void switchuvm(struct proc *p);
-void inituvm(pde_t *pgdir, char *init, uint32_t sz);
+void inituvm(pte_t *pgdir, char *init, uint32_t sz);
 
 #endif

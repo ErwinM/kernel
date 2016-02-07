@@ -12,7 +12,7 @@ extern uint32_t end;
 
 pageinfo mm_virtaddrtopageindex(uint32_t virtaddr);
 void setup_pt(uint32_t *page_table, int index_start, int index_end, uint32_t physical_start);
-page_dir_t* setupkvm();
+//page_dir_t* setupkvm();
 
 // The kernel's page directory
 //page_dir_t *kpd;
@@ -112,11 +112,11 @@ pageinfo mm_virtaddrtopageindex(uint32_t virtaddr){
     return pginf;
 }
 
-uint32_t* walkpagedir(page_dir_t *pgdir, uint32_t vaddr)
+uint32_t* walkpagedir(pte_t *pgdir, uint32_t vaddr)
 {
 	uint32_t *pgtable;
 	pageinfo pginf = mm_virtaddrtopageindex(vaddr);
-	pgtable = (uint32_t*)((uint32_t)pgdir->pde[pginf.pagetable] & 0xFFFFF000);
+	pgtable = (uint32_t*)((uint32_t)pgdir[pginf.pagetable] & 0xFFFFF000);
 	return pgtable[pginf.page] & 0xFFFFF000;
 }
 
@@ -127,7 +127,7 @@ void mappage(uint32_t *pgdir, uint32_t paddr, uint32_t vaddr, int perm)
 	uint32_t *pgtable;
 	if (pgdir[pginf.pagetable] & 1){
 		// pgtable exisits
-		pgtable = (uint32_t*)(pgdir[pginf.pagetable] & 0xFFFFF000);
+		pgtable = (pte_t*)(pgdir[pginf.pagetable] & 0xFFFFF000);
 		if(pgtable[pginf.page] & 1){
 			kprintf("vaddr: %h", vaddr);
 			PANIC("mappage: vaddr already mapped!");

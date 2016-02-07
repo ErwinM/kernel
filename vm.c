@@ -23,15 +23,15 @@ void initgdt()
 }
 
 // Sets up a new pgdir and maps the kernel part in
-page_dir_t* setupkvm()
+pte_t* setupkvm()
 {
 	// setup a new pgdir
-	page_dir_t *pgdir;
-	int k;
-	if((pgdir = (page_dir_t*)kalloc()) == 0 )
+	pte_t *pgdir;
+	if((pgdir = (pte_t*)kalloc()) == 0 )
 		PANIC("setupkvm: out of kheap memory.");
 	memset(pgdir, 0, PGSIZE);
 	// map 0..1mb to 0xc00000
+	int k;
 	for (k = 0 ; (k + PGSIZE) <= 0x100000 ; k += 0x1000){
 		mappage(pgdir, k, (0xc00000 + k), PTE_W);
 	}
@@ -68,7 +68,7 @@ void switchuvm(struct proc *p)
 // sz must be less than a page.
 // THIS ALLOCATION MECHANISM NEEDS TO CHANGE LATER
 // IT IS NOW ALLOCATING IN KERNEL MEMORY
-void inituvm(pde_t *pgdir, char *init, uint32_t sz)
+void inituvm(pte_t *pgdir, char *init, uint32_t sz)
 {
   char *mem;
 

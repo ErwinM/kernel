@@ -1,6 +1,5 @@
-/** paging.c:
-	* includes kernel memory allocation functions and paging code
-	*/
+// paging.c:
+// includes kernel memory allocation functions and paging code
 
 #include "paging.h"
 #include "common.h"

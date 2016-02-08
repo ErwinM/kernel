@@ -43,6 +43,7 @@ int kmain(struct multiboot *mboot_ptr)
 	initpaging();
 	initkheap(); // Create the kernel heap; without it you get stuck quickly
 	userinit();
+	scheduler();
 
 	fb_write("EXECUTION FINISHED.\n");
 	return 0;

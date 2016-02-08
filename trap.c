@@ -6,6 +6,9 @@
 void trap(struct trapframe *tf)
 {
 	//kprintf("Trapno: %d", tf->trapno);
+	if(tf->trapno == T_SYSCALL){
+		fb_write("SYSCALL!");
+	}
 	switch(tf->trapno){
 	case T_IRQ0 + IRQ_TIMER:
 	 	timer_callback();
@@ -15,9 +18,23 @@ void trap(struct trapframe *tf)
 		page_fault(tf->err);
 		EOI();
 		break;
+	case T_IRQ0 + IRQ_7:
+	case T_IRQ0 + IRQ_KBD:
+		spurious(tf->trapno);
+		break;
 	default:
 		kprintf("Unhandled trapno: %d.\n", tf->trapno);
+		kprintf("Errno: %d", tf->err);
 		PANIC("TRAP");
+	}
+}
+
+void spurious(uint32_t trapno)
+{
+	outb(0x20, 0x0B);
+	unsigned char irr = inb(0x20);
+	if ( irr & 0x80 ) {
+		EOI(trapno);
 	}
 }
 

@@ -32,7 +32,7 @@ uint32_t* kmalloc(uint32_t size, int align)
 		placement_address &= 0xFFFFF000;
 		placement_address += 0x1000;
 	}
-	uint32_t placed_at = placement_address;
+	uint32_t placed_at = (uint32_t*)placement_address;
 	kprintf("KMALLOC: requested: %d.", size);
 	kprintf(" Placed at: %h.\n", placed_at);
 	placement_address += size;

@@ -8,6 +8,7 @@
 
 extern struct proc *proc;
 extern struct cpu *mcpu;
+extern struct cpu maincpu;
 
 struct segdesc gdt[NSEGS];
 pde_t *kpgdir;
@@ -54,7 +55,7 @@ void initpaging()
 	}
 
   // Now, enable paging!
-	fb_printf("Enabling paging by loading CR3 with: %h", kpgdir);
+	//fb_printf("Enabling paging by loading CR3 with: %h", kpgdir);
   lcr3(kpgdir);
 	enablepag();
 	fb_init(1); // Redirect pointer to video memory
@@ -119,7 +120,7 @@ pte_t* setupkvm()
 // for when no process is running.
 void switchkvm(void)
 {
-  lcr3(proc);   // switch to the kernel page table
+  lcr3(kpgdir);   // switch to the kernel page table
 }
 
 // Switch TSS and h/w page table to correspond to process p.
@@ -130,10 +131,13 @@ void switchuvm(struct proc *p)
   mcpu->gdt[SEG_TSS].s = 0;
   mcpu->ts.ss0 = SEG_KDATA << 3;
   mcpu->ts.esp0 = (uint32_t)proc->kstack + KSTACK_SIZE;
-  ltr(SEG_TSS << 3);
+	kprintf("switchuvm: esp: %h\n", ((uint32_t)proc->kstack + KSTACK_SIZE));
+	ltr(SEG_TSS << 3);
   if(p->pgdir == 0)
     PANIC("switchuvm: no pgdir");
+	kprintf("switchuvm: loading lcr3 with: %h..", p->pgdir);
   lcr3(p->pgdir);  // switch to new address space
+	kprintf("..loaded.",0);
   popcli();
 }
 
@@ -146,9 +150,11 @@ void inituvm(pte_t *pgdir, char *init, uint32_t sz)
   if(sz >= PGSIZE)
     PANIC("inituvm: more than a page");
   mem = kalloc();
+	kprintf("inituvm: got location: %h", init);
   memset(mem, 0, PGSIZE);
   mappage(pgdir, mem, 0, PTE_W|PTE_U);
   memmove(mem, init, sz);
+	bbrk();
 }
 
 void page_fault(uint32_t err)
@@ -165,6 +171,7 @@ void page_fault(uint32_t err)
    int reserved = err & 0x8;     // Overwritten CPU-reserved bits of page entry?
    int id = err & 0x10;          // Caused by an instruction fetch?
 
+	 kprintf("Err: %h", err);
    // Output an error message.
    fb_write("Page fault! ( ");
    if (present) {fb_write("present ");}

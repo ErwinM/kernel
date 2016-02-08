@@ -166,6 +166,8 @@ void init_idt()
   idt_set_entry(45, (uint32_t)irq13, 0x08, 0x8E);
   idt_set_entry(46, (uint32_t)irq14, 0x08, 0x8E);
   idt_set_entry(47, (uint32_t)irq15, 0x08, 0x8E);
+	// SYS_CALL
+	idt_set_entry(64, (uint32_t)isr64, 0x08, 0xEE);
 
 	idt_flush((uint32_t)&idt_ptr);
 

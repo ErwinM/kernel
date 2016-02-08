@@ -124,6 +124,7 @@ IRQ  12,    44
 IRQ  13,    45
 IRQ  14,    46
 IRQ  15,    47
+ISR_NOERRORCODE 64 ;this is T_SYSCALL
 
 ; In isr.c
 extern trap

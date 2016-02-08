@@ -8,6 +8,7 @@ void init_idt(void);
 
 
 // interupt handlers
+// there are defined in kernel.s
 extern void isr0();
 extern void isr1();
 extern void isr2();
@@ -41,7 +42,6 @@ extern void isr29();
 extern void isr30();
 extern void isr31();
 
-// there are defined in kernel.s
 extern void irq0 ();
 extern void irq1 ();
 extern void irq2 ();
@@ -58,4 +58,6 @@ extern void irq12();
 extern void irq13();
 extern void irq14();
 extern void irq15();
+
+extern void isr64();
 #endif

@@ -40,6 +40,14 @@ struct trapframe {
   uint16_t padding6;
 };
 
+static inline uint8_t
+inb(uint16_t port)
+{
+  uint8_t data;
+  asm volatile("in %1,%0" : "=a" (data) : "d" (port));
+  return data;
+}
+
 // load GDT
 static inline void
 lgdt(struct segdesc *p, int size)
@@ -113,5 +121,11 @@ enablepag(void)
 	asm volatile("mov %%cr0, %0": "=r"(cr0));
 	cr0 |= 0x80000000; // Enable paging!
 	asm volatile("mov %0, %%cr0":: "r"(cr0));
+}
+
+static inline void
+bbrk(void)
+{
+	asm volatile("xchg %bx, %bx");
 }
 #endif

@@ -5,13 +5,13 @@
 
 
 ; exec(init, argv)
-global start
-start:
-  push dword argv
+global startinitcode
+startinitcode:
+	push dword argv
   push dword init
   push dword 0  ; where caller pc would be
   mov eax, 7 ; 7 = SYS_EXEC
-  int 64 ; 64 = system call
+	int 64 ; 64 = system call
 
 # for(;;) exit();
 exit:

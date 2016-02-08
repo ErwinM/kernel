@@ -1,4 +1,4 @@
-OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o trap.o common.o timer.o proc.o alloc.o vm.o spinlock.o switch.o
+OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o trap.o common.o timer.o proc.o alloc.o vm.o spinlock.o switch.o initcode.o
     CC = gcc
     CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
              -nostartfiles -nodefaultlibs -Wall -Wextra -c
@@ -9,9 +9,9 @@ OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o trap.o common.o 
 all: kernel.elf
 
 initcode:
-	$(AS) $(ASFLAGS) initcode.s -o initcode.out
-	#ld $(LDFLAGS) -N -e start -Ttext 0 -o initcode.out initcode.o
-	objcopy --input binary --output elf32-i386 --binary-architecture i386 initcode.out initcode
+	$(AS) $(ASFLAGS) initcode.s -o initcode.o
+	#ld $(LDFLAGS) -N -e start -Ttext 0 -o initcode initcode.o
+	#objcopy --input binary --output elf32-i386 --binary-architecture i386 initcode.out initcode
 	# $(OBJDUMP) -S initcode.o > initcode.asm
 
 	#--input binary \
@@ -19,8 +19,8 @@ initcode:
 	#				 --binary-architecture i386 data.txt data.o
 
 
-kernel.elf: $(OBJECTS) initcode
-	ld -T link.ld -melf_i386 $(OBJECTS) -o kernel.elf initcode
+kernel.elf: $(OBJECTS)
+	ld -T link.ld -melf_i386 $(OBJECTS) -o kernel.elf #initcode.out
 
 
 # 	ld $(LDFLAGS) $(OBJECTS) -o kernel.elf

@@ -7,7 +7,7 @@ void trap(struct trapframe *tf)
 {
 	//kprintf("Trapno: %d", tf->trapno);
 	if(tf->trapno == T_SYSCALL){
-		fb_write("SYSCALL!");
+		kprintf("trap: SYSCALL: %d", tf->eax);
 	}
 	switch(tf->trapno){
 	case T_IRQ0 + IRQ_TIMER:

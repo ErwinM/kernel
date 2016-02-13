@@ -22,6 +22,9 @@ initcode:
 kernel.elf: $(OBJECTS)
 	ld -T link.ld -melf_i386 $(OBJECTS) -o kernel.elf #initcode.out
 
+mk_ramdsk: mk_ramdsk.c
+	gcc -o mk_ramdsk mk_ramdsk.c
+
 
 # 	ld $(LDFLAGS) $(OBJECTS) -o kernel.elf
 
@@ -33,6 +36,7 @@ kernel.elf: $(OBJECTS)
 
 os.iso: kernel.elf
 	cp kernel.elf iso/boot/kernel.elf
+	cp initrd.img iso/boot/initrd.img
 	genisoimage -R                              \
                 -b boot/grub/stage2_eltorito    \
                 -no-emul-boot                   \

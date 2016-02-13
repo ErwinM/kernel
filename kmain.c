@@ -3,6 +3,10 @@
 #include "write.h"
 #include "descriptor_tables.h"
 #include "proc.h"
+#include "multiboot.h"
+
+uint32_t placement_address;
+struct multiboot mboothdr;
 
 int kmain(struct multiboot *mboot_ptr)
 {
@@ -35,6 +39,13 @@ int kmain(struct multiboot *mboot_ptr)
 	//const char *str = "erwin's first kernel";
 	fb_clear();  // screen
 	fb_init(0);
+	// grab and copy multiboot header (its somewhere in low memory)
+	memcpy(&mboothdr, mboot_ptr, sizeof(struct multiboot));
+	uint32_t initrd = *((uint32_t*)mboothdr.mods_addr);
+	uint32_t initrdend = *(uint32_t*)(mboothdr.mods_addr+4);
+	placement_address = initrdend;
+
+
 	initgdt();  // setup gdt
 	init_idt(); // setup the interrup tables
 	init_timer(50); // setup timer interrupt handler
@@ -44,7 +55,7 @@ int kmain(struct multiboot *mboot_ptr)
 	initkheap(); // Create the kernel heap; without it you get stuck quickly
 	userinit();
 	scheduler();
-
+	
 	fb_write("EXECUTION FINISHED.\n");
 	return 0;
 }

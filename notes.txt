@@ -3,3 +3,8 @@
 If we map pgdir and pgtables in identity mapped kernel space, we do not have
 to deal with recursive page linking and changing and accessing pgdirs will
 straight forward
+
+Ramdisk
+- get the location and size of the ram disk
+- adjust placement_address
+- write the vfs (this will be the buffercache eventually..)

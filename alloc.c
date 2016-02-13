@@ -20,7 +20,7 @@ struct {
   struct chunk *freelist;
 } kmem;
 
-uint32_t placement_address = (uint32_t)&end;
+extern uint32_t placement_address;
 
 // Allocates memory starting directly at the end of loaded kernel
 // This memory is permenantly allocated and cannot be freed!

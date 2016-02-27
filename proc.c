@@ -19,7 +19,7 @@ struct {
 
 int nextpid = 0;
 struct proc *initproc;
-struct proc *proc; // current running process
+struct proc *cp; // current running process
 struct cpu maincpu;
 struct cpu *mcpu = &maincpu;
 
@@ -129,18 +129,18 @@ void scheduler(void)
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      proc = p;
+      cp = p;
 			fb_write("scheduler: switching context.\n");
       switchuvm(p);
       p->state = RUNNING;
 			fb_write("scheduler: switching process.\n");
-      swtch(&mcpu->scheduler, proc->context);
+      swtch(&mcpu->scheduler, cp->context);
 			fb_write("it doesnt get here...");
       switchkvm();
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
-      proc = 0;
+      cp = 0;
     }
     //release(&ptable.lock);
 

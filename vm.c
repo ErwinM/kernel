@@ -6,7 +6,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
-extern struct proc *proc;
+extern struct proc *cp;
 extern struct cpu *mcpu;
 extern struct cpu maincpu;
 
@@ -130,8 +130,8 @@ void switchuvm(struct proc *p)
   mcpu->gdt[SEG_TSS] = SEG16(STS_T32A, &mcpu->ts, sizeof(mcpu->ts)-1, 0);
   mcpu->gdt[SEG_TSS].s = 0;
   mcpu->ts.ss0 = SEG_KDATA << 3;
-  mcpu->ts.esp0 = (uint32_t)proc->kstack + KSTACK_SIZE;
-	kprintf("switchuvm: esp: %h\n", ((uint32_t)proc->kstack + KSTACK_SIZE));
+  mcpu->ts.esp0 = (uint32_t)cp->kstack + KSTACK_SIZE;
+	kprintf("switchuvm: esp: %h\n", ((uint32_t)cp->kstack + KSTACK_SIZE));
 	ltr(SEG_TSS << 3);
   if(p->pgdir == 0)
     PANIC("switchuvm: no pgdir");

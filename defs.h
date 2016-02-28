@@ -37,4 +37,7 @@ void 				fb_init(uint8_t n);
 void 				fb_printf(char *buf, uint32_t n);
 void 				kprintf(char *buf, uint32_t n);
 
+// number of elements in fixed-size array
+#define NELEM(x) (sizeof(x)/sizeof((x)[0]))
+
 #endif

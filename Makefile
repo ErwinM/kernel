@@ -1,10 +1,30 @@
-OBJECTS = loader.o kmain.o kernel.o write.o descriptor_tables.o trap.o common.o timer.o proc.o alloc.o vm.o spinlock.o switch.o initcode.o initrd.o fs.o file.o
-    CC = gcc
-    CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
-             -nostartfiles -nodefaultlibs -Wall -Wextra -c
-    LDFLAGS = -T link.ld -melf_i386
-    AS = nasm
-    ASFLAGS = -f elf
+OBJECTS = \
+	loader.o\
+	kmain.o\
+	kernel.o\
+	write.o\
+	descriptor_tables.o\
+	trap.o\
+	common.o\
+	timer.o\
+	proc.o\
+	alloc.o\
+	vm.o\
+	spinlock.o\
+	switch.o\
+	initcode.o\
+	initrd.o\
+	fs.o\
+	file.o\
+	syscall.o\
+	sys_file.o\
+
+CC = gcc
+CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
+         -nostartfiles -nodefaultlibs -Wall -Wextra -c
+LDFLAGS = -T link.ld -melf_i386
+AS = nasm
+ASFLAGS = -f elf
 
 all: kernel.elf
 

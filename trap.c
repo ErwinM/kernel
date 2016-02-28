@@ -3,11 +3,16 @@
 #include "x86.h"
 #include "timer.h"
 
+extern struct proc *cp;
+
 void trap(struct trapframe *tf)
 {
 	//kprintf("Trapno: %d", tf->trapno);
 	if(tf->trapno == T_SYSCALL){
-		kprintf("trap: SYSCALL: %d", tf->eax);
+		kprintf("trap: SYSCALL: %d\n", tf->eax);
+		cp->tf = tf;
+		syscall();
+		return;
 	}
 	switch(tf->trapno){
 	case T_IRQ0 + IRQ_TIMER:

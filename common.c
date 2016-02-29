@@ -50,6 +50,14 @@ char* safestrcpy(char *s, const char *t, int n)
   return os;
 }
 
+int strlen(char *s)
+{
+  int n;
+  for ( n = 0 ; s[n]>0 ; n++ )
+    ;
+  return n;
+}
+
 extern void panic(const char *message, const char *file, uint32_t line)
 {
     // We encountered a massive problem and have to stop.

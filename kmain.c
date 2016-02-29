@@ -34,13 +34,13 @@ int kmain(struct multiboot *mboot_ptr)
 
 	struct inode *root;
 	struct file *fd;
-	//struct dirent de;
 	struct dirent dd[10];
+	char *data[512];
 
 	iinitrd(initrd);
 
 	root = iget(1, 1);
-	kprintf("kmain: loc of root: %h", root);
+	kprintf("kmain: size of root: %d", root->size);
 	fd->type = FD_INODE;
 	fd->ref = 0;
 	fd->readable = 1;
@@ -48,18 +48,18 @@ int kmain(struct multiboot *mboot_ptr)
 	fd->ip = root;
 	fd->off = 0;
 
-	kprintf("kmain: fd->ip %h", fd->ip);
+	struct dirent dep;
+	int n;
 
-	int k, nr;
-	kprintf("\nDirectory contents:\n",0);
-	k = listinitrd(root, &dd);
-	for (nr = 0 ; nr < k ; nr++){
-		fb_write(dd[nr].name);
-		fb_write("\n");
-	}
+	n = readi(root, &dep, sizeof(struct dirent), sizeof(struct dirent));
 
-	userinit();
-	scheduler();
+	fb_write(dep.name);
+	kprintf(" , %d\n", dep.inum);
+
+
+
+	//userinit();
+	//scheduler();
 
 	fb_write("EXECUTION FINISHED.\n");
 	return 0;

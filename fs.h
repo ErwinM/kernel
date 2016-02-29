@@ -2,11 +2,11 @@
 
 
 
-#define DIRSIZE	14
+#define DIRSIZ	14
 
 struct dirent {
 	uint16_t inum;
-	char name[DIRSIZE];
+	char name[DIRSIZ];
 };
 
 #define T_DIR  1   // Directory

@@ -15,3 +15,12 @@ struct initrdhdr
  	 uint32_t offset; // Offset in the initrd the file starts.
    uint32_t sz; 		// Length of the file.
 };
+
+struct rdbuf {
+	uint32_t flags;
+	char data[512];
+};
+
+#define B_BUSY  0x1  // buffer is locked by some process
+#define B_VALID 0x2  // buffer has been read from disk
+#define B_DIRTY 0x4  // buffer needs to be written to disk

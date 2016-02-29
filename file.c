@@ -11,6 +11,16 @@ struct {
 } ftable;
 
 
+int filewrite(struct file *f, char *addr, int n)
+{
+	if (f->type = FD_INODE) {
+
+	}
+	PANIC("filewrite: writing to unknown type");
+}
+
+
+
 int fileread(struct file *f, char *addr, int n)
 {
   int r;

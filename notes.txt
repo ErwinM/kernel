@@ -11,8 +11,10 @@ Ramdisk
 - write the vfs (this will be the buffercache eventually..)
 
 Implement starting of the first user program that starts the shell:
-- implement system call interface
+- implement system call interface  - DONE!
 - implement userlib to use system call
 - implement reading from the ramdisk (readi), skip buffercache for now
 - implement exec
 - write the first user program: hello world
+
+- implement namei for the ramdisk

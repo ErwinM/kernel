@@ -1,3 +1,6 @@
+#ifndef INCLUDE_KERNEL_H
+#define INCLUDE_KERNEL_H
+
 #include "spinlock.h"
 
 
@@ -37,3 +40,5 @@ struct pipe {
   int readopen;   // read fd is still open
   int writeopen;  // write fd is still open
 };
+
+#endif

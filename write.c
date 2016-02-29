@@ -66,7 +66,7 @@ void fb_put_char(char c)
 	} else {
 		where = vidptr + (cursor_y * 80 + cursor_x);
 		*where = c | attribute;
-		if (cursor_x == 80) {
+		if (cursor_x == 79) {
 			cursor_x = 0;
 			cursor_y++;
 		} else {

@@ -58,6 +58,16 @@ int strlen(char *s)
   return n;
 }
 
+int
+strncmp(const char *p, const char *q, uint32_t n)
+{
+  while(n > 0 && *p && *p == *q)
+    n--, p++, q++;
+  if(n == 0)
+    return 0;
+  return (uint8_t)*p - (uint8_t)*q;
+}
+
 extern void panic(const char *message, const char *file, uint32_t line)
 {
     // We encountered a massive problem and have to stop.

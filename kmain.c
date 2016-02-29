@@ -11,6 +11,8 @@ uint32_t placement_address;
 struct multiboot mboothdr;
 uint32_t *initrd;
 
+extern struct inode* dirlookup(struct inode*, char*);
+
 int kmain(struct multiboot *mboot_ptr)
 {
 		fb_clear();  // screen
@@ -49,12 +51,12 @@ int kmain(struct multiboot *mboot_ptr)
 	fd->off = 0;
 
 	struct dirent dep;
-	int n;
-
-	n = readi(root, &dep, sizeof(struct dirent), sizeof(struct dirent));
-
-	fb_write(dep.name);
-	kprintf(" , %d\n", dep.inum);
+	struct inode *n;
+	char *name ="wendy.txt";
+	n = dirlookup(root, name);
+	kprintf("main: got inode: %d", n->inum);
+	//fb_write(dep.name);
+	//kprintf(" , %d\n", dep.inum);
 
 
 

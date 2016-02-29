@@ -30,7 +30,8 @@ void iinitrd(uint32_t *location)
 	kprintf("iinitrd offset: %h", loc);
 
 	root = iget(1,1);
-	root->size = sb->nfiles;
+	root->size = (uint32_t)sizeof(struct dirent) * sb->nfiles;
+	root->type = T_DIR;
 
 }
 
@@ -47,6 +48,12 @@ struct rdbuf* rdget()
 	return b;
 }
 
+int rdrelse(struct rdbuf *b)
+{
+	b->flags = 0;
+	return 0;
+}
+
 char *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
 {
 	struct dirent *de;
@@ -59,7 +66,7 @@ char *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
 		// Reading root: (e.g. searching)
 		// We should return the nth dirent entry...
 		nr = off / sizeof(struct dirent);
-		if (off % sizeof(struct dirent) !=0 || nr > (ip->size - 1)) {
+		if (off % sizeof(struct dirent) !=0 || off > ip->size) {
 			PANIC("readinitrd: out of bounds offset");
 		}
 		nr = off / sizeof(struct dirent);

@@ -17,13 +17,14 @@ void 				memset(void*, int, uint32_t);
 void* 			memmove(void*, const void*, uint32_t);
 char* 			safestrcpy(char*, const char*, int);
 int 				strlen(char*);
+int					strncmp(const char*, const char*, uint32_t);
 // fs.c
 int 				readi(struct inode*, char*, uint32_t, uint32_t);
 // initrd.c
 void 				iinitrd(uint32_t);
 char* 			readinitrd(struct inode*, uint32_t, uint32_t);
 int * 			listinitrd(struct inode*, struct dirent*);
-
+int 				rdrelse(struct rdbuf*);
 // syscall.c
 int 				argint(uint32_t, uint32_t*);
 int					argptr(int, char**, int);

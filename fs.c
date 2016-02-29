@@ -54,13 +54,30 @@ int readi(struct inode *ip, char *dst, uint32_t off, uint32_t n)
 		b = readinitrd(ip, off, n);
 	}
 	memmove(dst, b->data, n);
-	//rdrelse(b);
+	rdrelse(b);
 	return n;
 }
 
 struct inode* dirlookup(struct inode *dp, char *name)
 {
+	struct dirent de;
+	int off, inum;
 
+	if (dp->type != T_DIR)
+		PANIC("dirlookup: inode not a dir");
+
+	kprintf("dirlookup: sizeof de: %d", sizeof(de));
+	for(off = 0; off <= dp->size ; off +=sizeof(de) ) {
+		fb_write("testing");
+		if(readi(dp, &de, off, sizeof(de)) == -1)
+			PANIC("dirlookup: readi failed!");
+		if(strncmp(de.name, name, DIRSIZ) == 0) {
+			// match
+			inum = de.inum;
+			return iget(dp->dev, inum);
+		}
+	}
+	PANIC("dirlookup: name not found");
 }
 
 // returns the inode for the given path

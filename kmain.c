@@ -50,14 +50,23 @@ int kmain(struct multiboot *mboot_ptr)
 	fd->ip = root;
 	fd->off = 0;
 
+
 	struct dirent dep;
 	struct inode *n;
-	char *name ="wendy.txt";
-	n = dirlookup(root, name);
-	kprintf("main: got inode: %d", n->inum);
-	//fb_write(dep.name);
-	//kprintf(" , %d\n", dep.inum);
+	char *name ="erwin.txt";
+	n = namei(name);
+	ilock(n);
 
+	int r;
+	r= readi(n, data, 0, 4);
+	fb_write(data);
+	r= readi(n, data, 4, 4);
+	fb_write(data);
+
+
+
+	//kprintf("main: dirlookup says: %d", (dirlookup(root, name))->inum);
+	//kprintf("main: got inode: %d", n->inum);
 
 
 	//userinit();

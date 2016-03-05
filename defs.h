@@ -12,7 +12,7 @@ uint32_t* 	kalloc();
 uint32_t*		kmalloc(uint32_t, int);
 uint32_t*		kmalloc_a(uint32_t);
 // common.h
-void 				memcpy(void*, void*, uint32_t);
+void*				memcpy(void*, const void*, uint32_t);
 void 				memset(void*, int, uint32_t);
 void* 			memmove(void*, const void*, uint32_t);
 char* 			safestrcpy(char*, const char*, int);

@@ -1,6 +1,6 @@
 // fs driver for the initial ramdsk
-// single directory fs
-// Inodes are not on disk as inodes so have to be constructed here...
+// single directory fs: file info is integrated into the header files
+// Headers need to be translated to inodes
 
 #include "common.h"
 #include "initrd.h"
@@ -27,6 +27,8 @@ void iinitrd(uint32_t *location)
 	//devsw[D_INITDR].read = readinitrd;
 	kprintf("initrd: sb: %h", sb->nfiles);
 	uint32_t loc = (uint32_t)location + (uint32_t)(*initrdhdrs).offset;
+		kprintf("iinitrd offset: %h", location);
+	kprintf("iinitrd offset: %h", initrdhdrs);
 	kprintf("iinitrd offset: %h", loc);
 
 	root = iget(1,1);
@@ -45,6 +47,7 @@ struct rdbuf* rdget()
 	if (b->flags == B_BUSY)
 		PANIC("rdget: No free buffers!");
 	b->flags == B_BUSY;
+	memset(b->data, 0, 512);
 	return b;
 }
 
@@ -54,11 +57,34 @@ int rdrelse(struct rdbuf *b)
 	return 0;
 }
 
-char *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
+struct initrdhdr *getinitrdhdr(struct inode *ip)
+{
+	// get the header that corresponds to the inode
+	struct initrdhdr *hdr;
+
+	hdr = initrdhdrs + (ip->inum - 2);
+	if(hdr->magic != 0xBF)
+		PANIC("updateinitrd: cannot find header!");
+	return hdr;
+}
+
+void getinitrd(struct inode *ip)
+{
+	struct initrdhdr *hdr;
+
+	hdr = getinitrdhdr(ip);
+	ip->size = hdr->sz;
+	ip->addrs[0] = hdr->offset;
+	kprintf("getinitrd: hdr->offset: %h",hdr->offset);
+	kprintf("getinitrd: ip->addrs: %h",*ip->addrs);
+}
+
+struct rdbuf *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
 {
 	struct dirent *de;
 	struct rdbuf *b;
 	uint32_t nr;
+	char *offset;
 
 	b = rdget();
 
@@ -73,25 +99,28 @@ char *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
 		de = b->data;
 		de->inum = nr + 2; // 1 = root
 		safestrcpy(de->name, (initrdhdrs[nr]).name);
-		//memcpy(&initrdbuf, data, n);
 		b->data[n] = 0;
 		return b;
+	} else {
+		// Reading a file
+		if((off + n) > ip->size)
+			PANIC("readinitrd: reading past end of file.");
+		offset = (uint32_t)sb + ip->addrs[0] + off;
+		kprintf("readinitrd: offset: %h", n);
+		memmove(b->data, offset, n);
+		//b->data[n+1] = 0;
+		kprintf("readinitrd: data>>>",0);
+		fb_write(b->data);
+		fb_write("<<<<<");
+		return b;
 	}
-	PANIC("readinitrd: inode != root!");
 }
 
-int * listinitrd(struct inode *ip, struct dirent *dst)
+void updateinitrd(struct inode *ip)
 {
-	if (!ip->inum == 1 )
-		PANIC("listinitrd: request dir listing from other than root");
-
-	int k;
-	//kprintf("listinitrd: sb->nfiles: %d", sb->nfiles);
-	for (k = 0 ; k < sb->nfiles ; k++ ){
-		safestrcpy(dst[k].inum, k );
-		safestrcpy(dst[k].name, initrdhdrs[k].name);
-		//fb_write("listinitrd: header name: ");
-		//fb_write(initrdhdrs[k].name);
-	}
-	return sb->nfiles;
+	struct initrdhdr *hdr;
+	hdr = getinitrdhdr(ip);
+	hdr->sz = ip->size;
+	hdr->magic = 0xBF;
+	hdr->offset = ip->addrs;
 }

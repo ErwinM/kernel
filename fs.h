@@ -1,6 +1,7 @@
 
 
-
+#define ROOTDEV 1
+#define ROOTINO 1
 
 #define DIRSIZ	14
 

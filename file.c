@@ -11,6 +11,22 @@ struct {
 } ftable;
 
 
+// Locate and return an empty slot in the file table
+int filealloc(void)
+{
+	struct file *fp;
+	struct inode *ip;
+
+	fp = &ftable.file;
+	while(fp->ref > 0 && fp < &ftable.file[NFILE])
+		fp++;
+	if (fp->ref > 0)
+		PANIC("fdalloc: cannot locate free file slot");
+	fp->ref = 1;
+	return fp;
+}
+
+
 int filewrite(struct file *f, char *addr, int n)
 {
 	if (f->type = FD_INODE) {
@@ -31,8 +47,7 @@ int fileread(struct file *f, char *addr, int n)
 		kprintf("fileread: pipe?!",0);
     //return piperead(f->pipe, addr, n);
   if(f->type == FD_INODE){
-		//kprintf("fileread: recognized INODE type",0);
-    //ilock(f->ip);
+    ilock(f->ip);
     if((r = readi(f->ip, addr, f->off, n)) > 0)
       f->off += r;
     //iunlock(f->ip);

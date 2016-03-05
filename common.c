@@ -10,12 +10,6 @@ void memset(void *dest, int val, uint32_t len)
     for ( ; len != 0; len--) *temp++ = val;
 }
 
-void memcpy(void *dest, void *src, uint32_t len)
-{
-	const uint16_t *sp = (const uint16_t *)src;
-  uint16_t *dp = (uint16_t *)dest;
-  for(; len != 0; len--) *dp++ = *sp++;
-}
 
 void* memmove(void *dst, const void *src, uint32_t n)
 {
@@ -34,6 +28,12 @@ void* memmove(void *dst, const void *src, uint32_t n)
       *d++ = *s++;
 
   return dst;
+}
+
+void*
+memcpy(void *dst, const void *src, uint32_t n)
+{
+  return memmove(dst, src, n);
 }
 
 // Like strncpy but guaranteed to NUL-terminate.

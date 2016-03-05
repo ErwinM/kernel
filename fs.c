@@ -13,6 +13,8 @@ struct {
   struct inode inode[NINODE];
 } icache;
 
+extern struct proc *cp;
+
 // Find the inode with number inum on device dev
 // and return the in-memory copy. Does not lock
 // the inode and does not read it from disk.
@@ -41,10 +43,16 @@ struct inode* iget(uint32_t dev, uint32_t inum)
 	ip->dev = dev;
 	ip->inum = inum;
 	ip->ref = 1;
+	//memset(ip->addrs, 0, sizeof(uint32_t[NDIRECT+1]));
 	//kprintf("iget: loc of ip: %h", ip);
 	return ip;
 }
 
+// read the inode from disk
+void ilock(struct inode *ip)
+{
+	getinitrd(ip);
+}
 
 int readi(struct inode *ip, char *dst, uint32_t off, uint32_t n)
 {
@@ -80,6 +88,12 @@ struct inode* dirlookup(struct inode *dp, char *name)
 	PANIC("dirlookup: name not found");
 }
 
+// commits an in memory inode to disk
+void iupdate(struct inode *ip)
+{
+	updateinitrd(ip);
+}
+
 // returns the inode for the given path
 struct inode* namei(char *path)
 {
@@ -87,23 +101,23 @@ struct inode* namei(char *path)
 	char *name[DIRSIZ];
 	char *s;
 	int len;
-	struct inode *root;
-
+	struct inode *dp, *ip;
+	if (1==1) // curently, only 1 dir so always root
+		dp = iget(ROOTDEV, ROOTINO);
+	else
+		dp = cp->cwd;
 	while (*path == '/')
 		path++;
 	s = path;
-
 	while (*path != '/' && *path != 0)
 		path++;
 	len = path - s;
-
 	memcpy(name, s, len);
 	name[len] = 0;
-
-	root = iget(1,1);
-
-
-
-	//search the current wd for the namei
-
+	kprintf("namei: looking for >>>",0);
+	fb_write(name);
+	fb_write("<<<<");
+	if((ip = dirlookup(dp, name)) == 0)
+		PANIC("namei: cannot find file");
+	return ip;
 }

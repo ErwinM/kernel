@@ -5,32 +5,46 @@
 extern struct proc *cp;
 
 int
-fetchint(uint32_t addr, int *ip)
+fetchint(uint32_t addr, uint32_t *ip)
 {
-  if(addr >= cp->sz || addr+4 > cp->sz)
-    return -1;
-  *ip = *(int*)(addr);
+	//kprintf("fetchinit: addr: %h", addr);
+	//kprintf("fetchinit: cp->sz: %h", cp->sz);
+	//kprintf("fetchinit: cp->sz: %h", cp->tf->esp);
+
+	if(addr >= cp->sz || addr+4 > cp->sz) {
+		PANIC("fetchint");
+		return -1;
+	}
+	kprintf("addr: %h", addr);
+	*ip = *(uint32_t*)(addr);
   return 0;
 }
 
 int
-fetchstr(uint32_t addr, int **pp)
+fetchstr(uint32_t addr, char **pp)
 {
 	char *s, *ep;
 
- 	if(addr >= cp->sz)
+	kprintf("fetchstr: addr: %h", addr);
+	//kprintf("fetchstr: cp->sz: %h", cp->sz);
+ 	if(addr >= cp->sz) {
+		PANIC("fetchstr cp-sz");
 		return -1;
+	}
  	*pp = (char*)addr;
  	ep = (char*)cp->sz;
  	for(s = *pp; s < ep; s++)
 		if(*s == 0)
-			return (int)s - (int)*pp;
- 	return -1;
+			return s - *pp;
+	PANIC("fetchstr");
+	return -1;
 }
+
+//
 
 int argint(uint32_t n, uint32_t *ip)
 {
-	fetchint(cp->tf->esp + 4 + 4*n, *ip);
+	fetchint(cp->tf->esp + 4 + 4*n, ip);
 }
 
 int
@@ -50,17 +64,23 @@ int
 argstr(int n, char **pp)
 {
   int addr;
-  if(argint(n, &addr) < 0)
-    return -1;
-  return fetchstr(addr, pp);
+	char *buf;
+
+  if(argint(n, &addr) < 0) {
+		PANIC("argstr: no arguments");
+		return -1;
+	}
+	return fetchstr(addr, pp);
 }
 
 // the actual sys call functions are found in sys_file, sys_proc and exec
 extern int sys_write(void);
+extern int sys_exec(void);
 
 // Syscall table
 static int (*syscalls[])(void) = {
-[SYS_write]   sys_write
+[SYS_write]   sys_write,
+[SYS_exec]		sys_exec
 };
 
 int syscall(void)

@@ -13,6 +13,7 @@ typedef unsigned char				uint8_t;
 typedef unsigned short int	uint16_t;
 typedef unsigned int				uint32_t, pde_t, pte_t;
 
+#define min(a, b) ((a) < (b) ? (a) : (b));
 #define PANIC(msg) panic(msg, __FILE__, __LINE__);
 #define ASSERT(b) ((b) ? (void)0 : panic_assert(__FILE__, __LINE__, #b));
 

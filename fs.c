@@ -57,13 +57,17 @@ void ilock(struct inode *ip)
 int readi(struct inode *ip, char *dst, uint32_t off, uint32_t n)
 {
 	struct rdbuf *b;
+	uint32_t tot, m;
 
 	if (ip->dev == 1) {
-		b = readinitrd(ip, off, n);
+		for(tot = 0; tot < n; tot += m, off += m, dst += m ){
+			b = readinitrd(ip, off, 512);
+			m = min(n - tot, 512);
+			memmove(dst, b->data, m);
+			rdrelse(b);
+		}
+		return n;
 	}
-	memmove(dst, b->data, n);
-	rdrelse(b);
-	return n;
 }
 
 struct inode* dirlookup(struct inode *dp, char *name)
@@ -82,6 +86,7 @@ struct inode* dirlookup(struct inode *dp, char *name)
 		if(strncmp(de.name, name, DIRSIZ) == 0) {
 			// match
 			inum = de.inum;
+			fb_write("dirlookup: found!");
 			return iget(dp->dev, inum);
 		}
 	}
@@ -112,11 +117,9 @@ struct inode* namei(char *path)
 	while (*path != '/' && *path != 0)
 		path++;
 	len = path - s;
+	memset(name, 0, sizeof(name));
 	memcpy(name, s, len);
 	name[len] = 0;
-	kprintf("namei: looking for >>>",0);
-	fb_write(name);
-	fb_write("<<<<");
 	if((ip = dirlookup(dp, name)) == 0)
 		PANIC("namei: cannot find file");
 	return ip;

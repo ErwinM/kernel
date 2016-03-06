@@ -33,44 +33,15 @@ int kmain(struct multiboot *mboot_ptr)
 	// up till now paging is still off, lets turn it on
 	initpaging();
 	initkheap(); // Create the kernel heap; without it you get stuck quickly
+	iinitrd(initrd); // initialise ramdsk
 
 	struct inode *root;
 	struct file *fd;
 	struct dirent dd[10];
 	char *data[512];
 
-	iinitrd(initrd);
-
-	root = iget(1, 1);
-	kprintf("kmain: size of root: %d", root->size);
-	fd->type = FD_INODE;
-	fd->ref = 0;
-	fd->readable = 1;
-	fd->writable = 0;
-	fd->ip = root;
-	fd->off = 0;
-
-
-	struct dirent dep;
-	struct inode *n;
-	char *name ="erwin.txt";
-	n = namei(name);
-	ilock(n);
-
-	int r;
-	r= readi(n, data, 0, 4);
-	fb_write(data);
-	r= readi(n, data, 4, 4);
-	fb_write(data);
-
-
-
-	//kprintf("main: dirlookup says: %d", (dirlookup(root, name))->inum);
-	//kprintf("main: got inode: %d", n->inum);
-
-
-	//userinit();
-	//scheduler();
+	userinit();
+	scheduler();
 
 	fb_write("EXECUTION FINISHED.\n");
 	return 0;

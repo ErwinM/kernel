@@ -62,12 +62,15 @@ void initpaging()
 	fb_write("..enabled.\n");
 }
 
+// Return the physical address of the PAGE in directory pgdir
+// that corresponds to virtual address va.
 uint32_t* walkpagedir(pte_t *pgdir, uint32_t vaddr)
 {
 	uint32_t *pgtable;
 	pageinfo pginf = mm_virtaddrtopageindex(vaddr);
 	pgtable = (uint32_t*)((uint32_t)pgdir[pginf.pagetable] & 0xFFFFF000);
-	return pgtable[pginf.page] & 0xFFFFF000;
+	kprintf("walkpagedir: page: %h", pgtable[pginf.page]);
+	return pgtable[pginf.page];
 }
 
 void mappage(uint32_t *pgdir, uint32_t paddr, uint32_t vaddr, int perm)
@@ -154,7 +157,97 @@ void inituvm(pte_t *pgdir, char *init, uint32_t sz)
   memset(mem, 0, PGSIZE);
   mappage(pgdir, mem, 0, PTE_W|PTE_U);
   memmove(mem, init, sz);
-	bbrk();
+}
+
+pde_t copyuvm(uint32_t *pgdir, uint32_t sz)
+{
+	pde_t *dir;
+	pte_t *pte;
+	uint32_t k;
+	char *mem;
+
+	if((dir = setupkvm()) == 0)
+		PANIC("copyuvm: error on setupkvm");
+
+	for(k = 0; k < sz; k += PGSIZE){
+		// error checking
+		if((pte = walkpagedir(pgdir, k)) == 0)
+			PANIC("copyuvm: no entry for pte");
+		if(!(*pte & PTE_P))
+			PANIC("copyuvm: page not present");
+		// copy the pages themselves
+		if((mem = kalloc()) == 0)
+			PANIC("copyuvm: kalloc failed");
+		memmove(mem, (char*)*pte, PGSIZE);
+		// map them in the new pgdir
+		mappage(dir, mem, PTE_ADDR(*pte), PTE_FLAGS(*pte));
+	}
+	return dir;
+}
+
+// Load a program segment into pgdir.  addr must be page-aligned
+// and the pages from addr to addr+sz must already be mapped.
+int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint32_t phoffset, uint32_t sz)
+{
+	uint32_t va, n;
+	pte_t *pte;
+	char *pa;
+
+	if((uint32_t)addr%PGSIZE != 0)
+		PANIC("loaduvm: addr not page aligned");
+	for(va = 0; va < sz; va += PGSIZE){
+		pte = walkpagedir(pgdir, va);
+		pa = PTE_ADDR(pte);
+		kprintf("loaduvm: pa: %h", pa);
+		if(sz-va < PGSIZE)
+			n = sz -va;
+		else
+			n = PGSIZE;
+		if(readi(ip, pa, phoffset + va, n) < n)
+			PANIC("loaduvm: readi");
+	}
+	return 0;
+}
+
+pte_t allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz)
+{
+	uint32_t k;
+	char *mem;
+
+	k = PGROUNDUP(oldsz);
+	for(; k < newsz; k+= PGSIZE){
+		mem = kalloc();
+		memset(mem, 0, PGSIZE);
+		mappage(pgdir, mem, (char*)k, PTE_U|PTE_W);
+		kprintf("allocuvm: mapped: %h", mem);
+	}
+	return newsz;
+}
+
+int copyout(pde_t *pgdir, uint32_t va, void *p, uint32_t len)
+{
+	pte_t *pte;
+	uint32_t pa, va0, pa0, n;
+	char *buf;
+
+	buf = (char*)p;
+	while ( len > 0) {
+		va0 = PGROUNDDOWN(va);
+		pte = walkpagedir(pgdir, va0);
+		kprintf("copyout: pte: %h", pte);
+		if(((uint32_t)pte & PTE_P) == 0 || ((uint32_t)pte & PTE_U) == 0 )
+			PANIC("copyout: page not usable!");
+		pa0 = PTE_ADDR(pte);
+		if(pa0 == 0)
+			PANIC("copyout: invalid physical address");
+		n = PGSIZE - (va - va0);
+		if (n > len)
+			n = len;
+		memmove(pa0 + (va - va0), buf, n);
+		len -= n;
+		buf += n;
+		va = va0 + PGSIZE;
+	}
 }
 
 void page_fault(uint32_t err)

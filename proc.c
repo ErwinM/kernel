@@ -9,8 +9,8 @@
 
 extern void forkret(void);
 extern void trapret(void);
-extern void startinitcode;
-char *sip = &startinitcode;
+//extern void startinitcode;
+char *sip = 0x0;
 
 struct {
 	struct spinlock lock;
@@ -66,14 +66,14 @@ found:
 void userinit(void)
 {
   struct proc *p;
-  //extern char _binary_initcode_out_start[], _binary_initcode_out_size[];
+  extern char _binary_initcode_out_start[], _binary_initcode_out_size[];
 
   p = allocproc();
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     PANIC("userinit: out of memory?");
 
-	inituvm(p->pgdir, sip, 1024);
+	inituvm(p->pgdir, _binary_initcode_out_start, (int)_binary_initcode_out_size);
 	kprintf("userinit: initcode was linked at: %h", sip);
   p->sz = PGSIZE;
   memset(p->tf, 0, sizeof(*p->tf));
@@ -87,6 +87,7 @@ void userinit(void)
   safestrcpy(p->name, "initcode", sizeof(p->name));
   //p->cwd = namei("/");
   p->state = RUNNABLE;
+	p->cwd = namei("/");
 }
 // A fork child's very first scheduling by scheduler()
 // will swtch here.  "Return" to user space.
@@ -145,4 +146,53 @@ void scheduler(void)
     //release(&ptable.lock);
 
   }
+}
+
+
+/*
+algorithm fork
+input: none
+output: to parent process, child PID number
+to child process, 0
+check for available kernel resources;
+get free proc table slot, unique PID nurnber;
+check that user not running too many processes;
+mark child state "being created;"
+copy data from patent proc table slot to new child slot;
+increment counts on current directory Mode and changed root Of applicahle); incrernent open file counts in file table;
+make copy of patent context (u area, text, data, stack) in memory;
+push dummy system level context layer onto child system level context;
+dummy context contains data allowing child process to recognize itself, and start running from here when scheduled;
+if (executing process is patent process)
+change child state to "ready to run;"
+return(child ID); /* from system to user
+else /* executing process is the child process
+initialize u area timing fields; return(0); 1* to user */
+
+void fork()
+{
+	struct proc *np;
+	int k, pid;
+
+	if((np = allocproc()) == 0)
+		PANIC("fork: cannot allocate processes");
+
+	if((np->pgdir = copyuvm(cp->pgdir, cp->sz)) == 0){
+		PANIC("fork: copyuvm failed");
+	}
+	np->sz = cp->sz;
+	np->parent = cp;
+	*np->tf = *cp->tf;
+	// this makes fork return 0 in the child, allowing code to check if its
+	// executing in the parent or child.
+	np->tf->eax = 0;
+
+	for(k = 0 ; k < NOFILE ; k++){
+		np->ofile[k] = cp->ofile[k];
+	}
+	np->cwd = cp->cwd;
+	safestrcpy(np->name, cp->name, sizeof(cp->name));
+	pid = np->pid;
+	np->state = RUNNABLE;
+	return pid;
 }

@@ -12,12 +12,12 @@ OBJECTS = \
 	vm.o\
 	spinlock.o\
 	switch.o\
-	initcode.o\
 	initrd.o\
 	fs.o\
 	file.o\
 	syscall.o\
 	sys_file.o\
+	exec.o\
 
 CC = gcc
 CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
@@ -27,31 +27,22 @@ AS = nasm
 ASFLAGS = -f elf
 
 all: kernel.elf
+	#-nostdinc -I. -c
+
+init: init.o usys.o
+	ld -m elf_i386 -Ttext 0 -o init.elf init.o usys.o
 
 initcode:
-	$(AS) $(ASFLAGS) initcode.s -o initcode.o
-	#ld $(LDFLAGS) -N -e start -Ttext 0 -o initcode initcode.o
-	#objcopy --input binary --output elf32-i386 --binary-architecture i386 initcode.out initcode
-	# $(OBJDUMP) -S initcode.o > initcode.asm
-
-	#--input binary \
-	#				 --output elf32-i386 \
-	#				 --binary-architecture i386 data.txt data.o
+	nasm initcode.s -o initcode.out
+	ld -e start -r -b binary -m elf_i386 -Ttext 0 -o initcode.o initcode.out
+	#objcopy -S -O binary initcode.out initcode
 
 
 kernel.elf: $(OBJECTS)
-	ld -T link.ld -melf_i386 $(OBJECTS) -o kernel.elf #initcode.out
+	ld -T link.ld -m elf_i386 -o kernel.elf $(OBJECTS) initcode.o
 
 mk_ramdsk: mk_ramdsk.c
 	gcc -o mk_ramdsk mk_ramdsk.c
-
-
-# 	ld $(LDFLAGS) $(OBJECTS) -o kernel.elf
-
-#	kernel: $(OBJS) entry.o entryother initcode kernel.ld
-# $(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
-# $(OBJDUMP) -S kernel > kernel.asm
-# $(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
 
 
 os.iso: kernel.elf
@@ -78,4 +69,4 @@ run: os.iso
 	$(AS) $(ASFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o kernel.elf os.iso initcode initcode.out
+	rm -rf *.o kernel.elf os.iso initcode initcode.out init.elf

@@ -13,8 +13,9 @@ Ramdisk
 Implement starting of the first user program that starts the shell:
 - implement system call interface  - DONE!
 - implement userlib to use system call
-- implement reading from the ramdisk (readi), skip buffercache for now
+- implement reading from the ramdisk (readi), skip buffercache for now - DONE!
 - implement exec
+- implement sys_write system call
 - write the first user program: hello world
 
-- implement namei for the ramdisk
+- implement namei for the ramdisk - DONE!

@@ -27,14 +27,20 @@ int argfd(uint32_t n, uint32_t *pfd, struct file **pf)
 // sys_write(fd, pointer to char buffer, number of chars)
 int sys_write(void)
 {
-	kprintf("sys_write reached!",0);
+	kprintf("sys_write reached!\n",0);
 	int n;
 	struct file *f;
 	char *p;
 
+	n = argstr(0, &p);
+	kprintf("still alive: %d", n);
+	fb_write(p);
+	//fb_write(p);
+	/*
 	if ( argfd(0,0,f) < 0 || argint(2, &n) || argptr(1, &p, n) )
 		PANIC("sys_write: BAD arguments!");
 	return filewrite(f, p , n);
+	*/
 }
 
 // Allocate a fd to a caller process in the ptable entry
@@ -83,4 +89,33 @@ fd_t sys_open(void)
   f->readable = !(omode & O_WRONLY);
   f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
 	return fd;
+}
+
+int sys_exec(void)
+{
+	char *argv[MAXARG], *path, *buf;
+	int i;
+	uint32_t uargv, uarg;
+
+	if(argstr(0, &path) < 0 || argint(1, (int*)&uargv) < 0 )
+	 	PANIC("sys_exec: not finding arguments");
+	memset(argv, 0, sizeof(argv));
+	for(i = 0;;i++){
+		if(i >= NELEM(argv))
+			PANIC("sys_exec: too many arguments");
+		if(fetchint(uargv+4*i, (int*)&uarg) < 0 )
+			PANIC("sys_exec: fetchint");
+		if(uarg == 0 ) {
+			argv[i] = 0;
+			break;
+		}
+		if(fetchstr(uarg, &argv[i]) < 0)
+			PANIC("sys_exec: fetchstr");
+		kprintf("sys_exec: argv[i] %d >", i);
+		fb_write(argv[i]);
+	}
+	fb_write(">>>>>>>>");
+	fb_write(path);
+	fb_write("<<<<<<<<");
+	return exec(path, argv);
 }

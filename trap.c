@@ -17,15 +17,19 @@ void trap(struct trapframe *tf)
 	switch(tf->trapno){
 	case T_IRQ0 + IRQ_TIMER:
 	 	timer_callback();
-		EOI();
+		EOI(tf->trapno);
 		break;
 	case T_PGFLT:
 		page_fault(tf->err);
 		EOI();
 		break;
 	case T_IRQ0 + IRQ_7:
-	case T_IRQ0 + IRQ_KBD:
 		spurious(tf->trapno);
+		break;
+	case T_IRQ0 + IRQ_KBD:
+		//spurious(tf->trapno);
+		consoleintr();
+		EOI(tf->trapno);
 		break;
 	default:
 		kprintf("Unhandled trapno: %d.\n", tf->trapno);

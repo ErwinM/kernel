@@ -28,7 +28,7 @@ int kmain(struct multiboot *mboot_ptr)
 
 	initgdt();  // setup gdt
 	init_idt(); // setup the interrup tables
-	init_timer(50); // setup timer interrupt handler
+	//init_timer(50); // setup timer interrupt handler
 
 	// up till now paging is still off, lets turn it on
 	initpaging();
@@ -39,6 +39,9 @@ int kmain(struct multiboot *mboot_ptr)
 	struct file *fd;
 	struct dirent dd[10];
 	char *data[512];
+
+
+
 
 	userinit();
 	scheduler();

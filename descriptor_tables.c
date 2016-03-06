@@ -56,36 +56,6 @@ struct gdt_ptr_struct gdt_ptr;
 struct idt_entry idt[256];
 struct idt_ptr_struct idt_ptr;
 
-/*
-void initgdtOLD()
-{
-		fb_write("Setting up Global Descriptor Table...");
-		gdt_ptr.limit = (sizeof(struct gdt_entry) * 5) - 1; // 5 entries in our table
-		gdt_ptr.base = (uint32_t)&gdt;
-
-		gdt_set_entry(0, 0, 0, 0, 0);
-		gdt_set_entry(SEG_KCODE, 0, 0xFFFFFFFF, 0x9a, 0xcf);
-		gdt_set_entry(SEG_KDATA, 0, 0xFFFFFFFF, 0x92, 0xcf);
-		gdt_set_entry(SEG_UCODE, 0, 0xFFFFFFFF, 0xFa, 0xcf);
-		gdt_set_entry(SEG_UDATA, 0, 0xFFFFFFFF, 0xF2, 0xcf);
-		// todo: add TSSseg
-
-		gdt_flush((uint32_t)&gdt_ptr);
-		fb_write("Succes.\n");
-}
-
-static void gdt_set_entry( uint16_t entry_num, uint32_t base, uint32_t limit, uint8_t access_byte, uint8_t gran)
-{
-	gdt[entry_num].base_low = (base & 0xFFFF); // only first 16 bits
-	gdt[entry_num].base_mid = ((base >> 16) & 0xFF);
-	gdt[entry_num].base_high = ((base >> 24) & 0xFF);
-
-	gdt[entry_num].limit_low = (limit & 0xFFFF); // only first 16 bits
-	gdt[entry_num].limit_high_and_flags = ((limit >> 16) & 0x0F);
-	gdt[entry_num].limit_high_and_flags |= (gran & 0xF0);
-	gdt[entry_num].access_byte = access_byte;
-}
-*/
 static void idt_set_entry( uint16_t entry_num, uint32_t base, uint16_t sel, uint8_t access_byte )
 {
 	idt[entry_num].base_low = (base & 0xFFFF);

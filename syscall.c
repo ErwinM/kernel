@@ -15,7 +15,7 @@ fetchint(uint32_t addr, uint32_t *ip)
 		PANIC("fetchint");
 		return -1;
 	}
-	kprintf("addr: %h", addr);
+	//kprintf("addr: %h", addr);
 	*ip = *(uint32_t*)(addr);
   return 0;
 }
@@ -25,7 +25,7 @@ fetchstr(uint32_t addr, char **pp)
 {
 	char *s, *ep;
 
-	kprintf("fetchstr: addr: %h", addr);
+	//kprintf("fetchstr: addr: %h", addr);
 	//kprintf("fetchstr: cp->sz: %h", cp->sz);
  	if(addr >= cp->sz) {
 		PANIC("fetchstr cp-sz");
@@ -33,6 +33,8 @@ fetchstr(uint32_t addr, char **pp)
 	}
  	*pp = (char*)addr;
  	ep = (char*)cp->sz;
+	kprintf("fetchstr: *pp",0);
+	fb_write(*pp);
  	for(s = *pp; s < ep; s++)
 		if(*s == 0)
 			return s - *pp;

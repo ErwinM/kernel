@@ -1,0 +1,1 @@
+void printf(int, char*);

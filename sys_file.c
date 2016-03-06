@@ -27,13 +27,11 @@ int argfd(uint32_t n, uint32_t *pfd, struct file **pf)
 // sys_write(fd, pointer to char buffer, number of chars)
 int sys_write(void)
 {
-	kprintf("sys_write reached!\n",0);
 	int n;
 	struct file *f;
 	char *p;
 
-	n = argstr(0, &p);
-	kprintf("still alive: %d", n);
+	n = argptr(1, &p, 8);
 	fb_write(p);
 	//fb_write(p);
 	/*

@@ -1,8 +1,12 @@
 // User space program
 
-int exec(char*, char**);
+#include "user.h"
+
 
 void main()
 {
-	write("something");
+	printf(0, "something big\0");
+
+	for(;;)
+		asm("hlt");
 }

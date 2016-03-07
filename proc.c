@@ -120,7 +120,7 @@ void scheduler(void)
   for(;;){ // endless Loop
     // Enable interrupts on this processor.
     sti();
-		fb_write("scheduler: IRQ enabled.\n");
+		//fb_write("scheduler: IRQ enabled.\n");
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -131,13 +131,13 @@ void scheduler(void)
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       cp = p;
-			fb_write("scheduler: switching context.\n");
+			//fb_write("scheduler: switching context.\n");
       switchuvm(p);
       p->state = RUNNING;
-			kprintf("scheduler: switching to process: %d\n", p->pid);
+			//kprintf("scheduler: switching to process: %d\n", p->pid);
       swtch(&mcpu->scheduler, cp->context);
 
-			fb_write("it doesnt get here...");
+			//fb_write("it doesnt get here...");
       switchkvm();
       // Process is done running for now.
       // It should have changed its p->state before coming back.
@@ -156,7 +156,7 @@ void sched()
 
 void yield(void)
 {
-	kprintf("%d: yielding...\n", cp->pid);
+	//kprintf("%d: yielding...\n", cp->pid);
 	acquire(&ptable.lock);
 	cp->state = RUNNABLE;
 	sched();
@@ -207,4 +207,18 @@ void sleep(void *chan, struct spinlock *lk)
 		release(&ptable.lock);
 		acquire(lk);
 	}
+}
+
+void wakeup(void *chan)
+{
+	struct proc *p;
+
+	acquire(&ptable.lock);
+	for (p = ptable.proc ; p < &ptable.proc[64] ; p++ ){
+		if(p->state == SLEEPING && p->chan == chan){
+			kprintf("wakeup: waking: %d", p->pid);
+			p->state = RUNNABLE;
+		}
+	}
+	release(&ptable.lock);
 }

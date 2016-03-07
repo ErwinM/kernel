@@ -134,13 +134,13 @@ void switchuvm(struct proc *p)
   mcpu->gdt[SEG_TSS].s = 0;
   mcpu->ts.ss0 = SEG_KDATA << 3;
   mcpu->ts.esp0 = (uint32_t)cp->kstack + KSTACK_SIZE;
-	kprintf("switchuvm: esp: %h\n", ((uint32_t)cp->kstack + KSTACK_SIZE));
+	//kprintf("switchuvm: esp: %h\n", ((uint32_t)cp->kstack + KSTACK_SIZE));
 	ltr(SEG_TSS << 3);
   if(p->pgdir == 0)
     PANIC("switchuvm: no pgdir");
-	kprintf("switchuvm: loading lcr3 with: %h..", p->pgdir);
+	//kprintf("switchuvm: loading lcr3 with: %h..", p->pgdir);
   lcr3(p->pgdir);  // switch to new address space
-	kprintf("..loaded.\n",0);
+	//kprintf("..loaded.\n",0);
   popcli();
 }
 

@@ -29,7 +29,7 @@ void trap(struct trapframe *tf)
 		break;
 	case T_IRQ0 + IRQ_KBD:
 		//spurious(tf->trapno);
-		consoleintr();
+		consoleint();
 		EOI(tf->trapno);
 		return;
 	default:

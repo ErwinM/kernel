@@ -32,3 +32,4 @@ global %1
 SYSCALL write
 SYSCALL fork
 SYSCALL exec
+SYSCALL read

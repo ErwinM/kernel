@@ -11,12 +11,14 @@ int argfd(uint32_t n, uint32_t *pfd, struct file **pf)
 	int fd;
 	struct file *f;
 
-	if (argint(n, &fd) < 0)
+	if (argint(n, &fd) < 0) {
 		kprintf("argfd: cannot get argument",0);
 		bbrk();
-	if (fd < 0 || fd > NFILE)
+	}
+	if (fd < 0 || fd > NFILE) {
 		kprintf("argfd: got invalid fd",0);
 		bbrk();
+	}
 	if (pfd)
 		pfd = fd;
 	if (pf)
@@ -49,10 +51,11 @@ int sys_read(void)
 	char *buf;
 	int n;
 
+
 	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &buf, n) < 0)
 		PANIC("sys_read: error reading arguments.");
 
-	return fileread(f, buf, n);
+	return consoleread(0, buf, 100);//fileread(f, buf, n);*/
 }
 
 // Allocate a fd to a caller process in the ptable entry

@@ -2,7 +2,12 @@
 
 void main()
 {
-	printf(0,"ErwinOS shell loaded.\n");
+	char *buf[64];
+	int n;
 
-	printf(0,"ErwinOS:/ $");
+	printf(0,"ErwinOS shell loaded.\n");
+	printf(0,"ErwinOS:/ $ ");
+
+	n = read(0, buf, 100);
+	printf(0, "got: %s", buf);
 }

@@ -41,7 +41,8 @@ void fb_clear(void)
 void fb_put_char(char c)
 {
 	// Check if we reached the end of the screen and need to scroll
-	if ( cursor_y >= 24 ) fb_scroll();
+	if ( cursor_y >= 24 )
+		fb_scroll();
 
 	// The background colour is black (0), the foreground is white (15).
 	uint8_t backColour = 0;

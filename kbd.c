@@ -2,11 +2,16 @@
 #include "defs.h"
 #include "kbd.h"
 
-void kbdgetc(void)
+uint8_t kbdgetc(void)
 {
+	uint8_t sc;
+	uint8_t c;
 
-	/*	sc=inb(KBDATAP);
-		if((sc & (1 << 7)) == 0)
-			c = normalmap[sc];
-			fb_put_char(c);*/
+	sc = inb(KBDATAP);
+	if((sc & (1 << 7)) == 0) {
+		c = normalmap[sc];
+		return c;
+	} else {
+		return 255;
+	}
 }

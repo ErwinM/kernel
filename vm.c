@@ -16,13 +16,13 @@ pde_t *kpgdir;
 
 void initgdt()
 {
-		fb_write("Setting up Global Descriptor Table...");
+		kprintf("Setting up Global Descriptor Table...");
 		mcpu->gdt[SEG_KCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, 0);
 		mcpu->gdt[SEG_KDATA] = SEG(STA_W, 0, 0xffffffff, 0);
 		mcpu->gdt[SEG_UCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, DPL_USER);
 		mcpu->gdt[SEG_UDATA] = SEG(STA_W, 0, 0xffffffff, DPL_USER);
 		lgdt(mcpu->gdt, sizeof(mcpu->gdt));
-		fb_write("Succes.\n");
+		kprintf("Succes.\n");
 }
 
 pageinfo mm_virtaddrtopageindex(uint32_t virtaddr){
@@ -36,7 +36,7 @@ pageinfo mm_virtaddrtopageindex(uint32_t virtaddr){
 
 void initpaging()
 {
-	fb_write("Initialising paging...");
+	kprintf("Initialising paging...");
 	kpgdir = kmalloc_a(PGSIZE);
 	memset(kpgdir, 0, PGSIZE);
 	int k;
@@ -59,7 +59,7 @@ void initpaging()
   lcr3(kpgdir);
 	enablepag();
 	fb_init(1); // Redirect pointer to video memory
-	fb_write("..enabled.\n");
+	kprintf("..enabled.\n");
 }
 
 // Return the physical address of the PAGE in directory pgdir
@@ -89,7 +89,7 @@ void mappage(uint32_t *pgdir, uint32_t paddr, uint32_t vaddr, int perm)
 		}
 	} else {
 		// pgtable does not exist, make it
-		// fb_write("PT does not exist!");
+		// kprintf("PT does not exist!");
 		if((pgtable = kalloc()) == 0){
 			PANIC("mappage: kalloc returned 0");
 		}
@@ -267,15 +267,13 @@ void page_fault(uint32_t err)
    int reserved = err & 0x8;     // Overwritten CPU-reserved bits of page entry?
    int id = err & 0x10;          // Caused by an instruction fetch?
 
-	 kprintf("Err: %h", err);
+	 kprintf("Err: %x", err);
    // Output an error message.
-   fb_write("Page fault! ( ");
-   if (present) {fb_write("present ");}
-   if (rw) {fb_write("read-only ");}
-   if (us) {fb_write("user-mode ");}
-   if (reserved) {fb_write("reserved ");}
-   fb_write(" at ");
-   fb_write_hex(faulting_address);
-   fb_write("\n");
+   kprintf("Page fault! ( ");
+   if (present) {kprintf("present ");}
+   if (rw) {("read-only ");}
+   if (us) {kprintf("user-mode ");}
+   if (reserved) {kprintf("reserved ");}
+   kprintf(" at %x\n", faulting_address);
    PANIC("Page fault");
 }

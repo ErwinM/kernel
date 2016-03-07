@@ -88,38 +88,6 @@ void fb_move_cursor(void)
 	outb(FB_DATA_PORT, pos);
 }
 
-void kprintf(char *buf, uint32_t n)
-{
-	fb_printf(buf, n);
-}
-
-void fb_printf(char *buf, uint32_t n)
-{
-	int i = 0;
-	while( buf[i] != '\0')
-	{
-		if (buf[i] == 0x25)
-		{
-			if (buf[i+1] == 0x64)
-			{
-				fb_write_dec(n);
-				i += 2;
-			} else if (buf[i+1] == 0x68)
-			{
-				fb_write_hex(n);
-				i += 2;
-			} else {
-				fb_put_char(buf[i]);
-				i++;
-			}
-		} else {
-		fb_put_char(buf[i]);
-		i++;
-		}
-	}
-}
-
-
 void fb_write(char *buf)
 {
 	int i = 0;
@@ -128,75 +96,6 @@ void fb_write(char *buf)
 		fb_put_char(buf[i]);
 		i++;
 	}
-}
-
-void fb_write_dec(uint32_t n)
-{
-    if (n == 0)
-    {
-        fb_put_char('0');
-        return;
-    }
-
-    int32_t acc = n;
-    char c[32];
-    int i = 0;
-    while (acc > 0)
-    {
-        c[i] = '0' + acc%10;
-        acc /= 10;
-        i++;
-    }
-    c[i] = 0;
-
-    char c2[32];
-    c2[i--] = 0;
-    int j = 0;
-    while(i >= 0)
-    {
-        c2[i--] = c[j++];
-    }
-    fb_write(c2);
-}
-
-void fb_write_hex(uint32_t n)
-{
-    int32_t tmp;
-
-    fb_write("0x");
-
-    char noZeroes = 1;
-
-    int i;
-    for (i = 28; i > 0; i -= 4)
-    {
-        tmp = (n >> i) & 0xF;
-        if (tmp == 0 && noZeroes != 0)
-        {
-            continue;
-        }
-
-        if (tmp >= 0xA)
-        {
-            noZeroes = 0;
-            fb_put_char (tmp-0xA+'a' );
-        }
-        else
-        {
-            noZeroes = 0;
-            fb_put_char ( tmp+'0' );
-        }
-    }
-
-    tmp = n & 0xF;
-    if (tmp >= 0xA)
-    {
-        fb_put_char (tmp-0xA+'a');
-    }
-    else
-    {
-        fb_put_char (tmp+'0');
-    }
 }
 
 void fb_scroll(void)

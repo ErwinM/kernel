@@ -72,13 +72,7 @@ extern void panic(const char *message, const char *file, uint32_t line)
 {
     // We encountered a massive problem and have to stop.
     asm volatile("cli"); // Disable interrupts.
-    fb_write("PANIC(");
-    fb_write(message);
-    fb_write(") at ");
-    fb_write(file);
-    fb_write(":");
-    fb_write_dec(line);
-    fb_write("\n");
+		kprintf("PANIC(%s) at %s: %d\n", message, file, line);
     // trigger Bochs debug mode (magic instruction)
 		asm volatile("xchg %bx, %bx");
 }
@@ -88,13 +82,7 @@ extern void panic_assert(const char *file, uint32_t line, const char *desc)
     // An assertion failed, and we have to panic.
     asm volatile("cli"); // Disable interrupts.
 
-    fb_write("ASSERTION-FAILED(");
-    fb_write(desc);
-    fb_write(") at ");
-    fb_write(file);
-    fb_write(":");
-    fb_write_dec(line);
-    fb_write("\n");
+    kprintf("ASSERTION-FAILED(%s) at %s: %d\n", desc, file, line);
     // trigger Bochs debug mode (magic instruction)
 		asm volatile("xchg %bx, %bx");
 		//for(;;);

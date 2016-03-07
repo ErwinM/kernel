@@ -222,3 +222,26 @@ void wakeup(void *chan)
 	}
 	release(&ptable.lock);
 }
+
+void procdump(void)
+{
+	struct proc *p;
+	char *state;
+
+	static char *states[] = {
+	[UNUSED]    "unused ",
+	[EMBRYO]    "embryo ",
+	[SLEEPING]  "sleep  ",
+	[RUNNABLE]  "ready  ",
+	[RUNNING]   "running",
+	[ZOMBIE]    "zombie "
+	};
+	kprintf("\n\n");
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+		if(p->state == UNUSED)
+			continue;
+		state = states[p->state];
+		kprintf("%d: %s %s\n", p->pid, state, p->name);
+	}
+	kprintf("\n");
+}

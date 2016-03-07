@@ -10,4 +10,5 @@ void main()
 
 	n = read(0, buf, 100);
 	printf(0, "got: %s", buf);
+	printf(0, "len: %d", n);
 }

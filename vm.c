@@ -180,9 +180,6 @@ pde_t copyuvm(uint32_t *pgdir, uint32_t sz)
 		if((mem = kalloc()) == 0)
 			PANIC("copyuvm: kalloc failed");
 		memmove(mem, (char*)PTE_ADDR(pte), PGSIZE);
-		kprintf("copyuvm: just copied from: %h", pte);
-		kprintf(" to: %h\n", mem);
-		bbrk();
 		// map them in the new pgdir
 		mappage(dir, mem, k, PTE_FLAGS(pte));
 	}

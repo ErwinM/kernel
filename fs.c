@@ -58,8 +58,10 @@ int readi(struct inode *ip, char *dst, uint32_t off, uint32_t n)
 {
 	struct rdbuf *b;
 	uint32_t tot, m;
-
-	if (ip->dev == 1) {
+	if (ip->dev == 0){
+		// console
+		consoleread(ip, dst, n);
+	} else if (ip->dev == 1) {
 		for(tot = 0; tot < n; tot += m, off += m, dst += m ){
 			b = readinitrd(ip, off, 512);
 			m = min(n - tot, 512);

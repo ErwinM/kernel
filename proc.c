@@ -26,7 +26,7 @@ struct cpu *mcpu = &maincpu;
 
 void initptable()
 {
-	//...
+	initlock(&ptable.lock, "ptable");
 }
 
 static struct proc* allocproc()
@@ -95,7 +95,7 @@ void forkret(void)
 {
   static int first = 1;
   // Still holding ptable.lock from scheduler.
-  //release(&ptable.lock);
+  release(&ptable.lock);
 
   if (first) {
     // Some initialization functions must be run in the context
@@ -122,7 +122,7 @@ void scheduler(void)
     sti();
 		fb_write("scheduler: IRQ enabled.\n");
     // Loop over process table looking for process to run.
-    //acquire(&ptable.lock);
+    acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -136,23 +136,33 @@ void scheduler(void)
       p->state = RUNNING;
 			kprintf("scheduler: switching to process: %d\n", p->pid);
       swtch(&mcpu->scheduler, cp->context);
+
 			fb_write("it doesnt get here...");
       switchkvm();
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       cp = 0;
     }
-    //release(&ptable.lock);
+    release(&ptable.lock);
   }
+}
+
+void sched()
+{
+	if(!holding(&ptable.lock))
+		PANIC("sched: not holding ptable lock");
+	swtch(&cp->context, mcpu->scheduler); // this makes it continue in scheduler above after swtch() there...
 }
 
 void yield(void)
 {
 	kprintf("%d: yielding...\n", cp->pid);
+	acquire(&ptable.lock);
 	cp->state = RUNNABLE;
-	swtch(&cp->context, mcpu->scheduler); // this makes it continue in scheduler above after swtch() there...
-}
+	sched();
 
+	release(&ptable.lock);
+}
 
 int fork()
 {
@@ -180,4 +190,21 @@ int fork()
 	pid = np->pid;
 	np->state = RUNNABLE;
 	return pid;
+}
+
+void sleep(void *chan, struct spinlock *lk)
+{
+	if(lk != &ptable.lock){
+		acquire(&ptable.lock);
+		release(lk);
+	}
+	cp->chan = chan;
+	cp->state = SLEEPING;
+	sched();
+
+	cp->chan = 0;
+	if(lk != &ptable.lock){
+		release(&ptable.lock);
+		acquire(lk);
+	}
 }

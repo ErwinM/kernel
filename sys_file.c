@@ -42,6 +42,19 @@ int sys_write(void)
 	return 0;
 }
 
+// number read(fd, buffer, count)
+int sys_read(void)
+{
+	struct file *f;
+	char *buf;
+	int n;
+
+	if(argfd(0, 0, &f) < 0 || argint(2, &n) < 0 || argptr(1, &buf, n) < 0)
+		PANIC("sys_read: error reading arguments.");
+
+	return fileread(f, buf, n);
+}
+
 // Allocate a fd to a caller process in the ptable entry
 // to indicate it has an open file
 fd_t fdalloc(struct file *f)
@@ -54,7 +67,6 @@ fd_t fdalloc(struct file *f)
 		}
 	}
 }
-
 
 /*
 The open system call is the first step a process must take to access the data in a

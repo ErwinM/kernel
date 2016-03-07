@@ -37,9 +37,12 @@ ULIB = ulib.o usys.o printf.o
 
 init: init.o $(ULIB)
 	ld -m elf_i386 -Ttext 0 -o init.elf init.o $(ULIB)
-	./mk_ramdsk init.elf init.elf erwin.txt erwin.txt
+	./mk_ramdsk init.elf init.elf sh sh
 
-_%: %.o $(ULIB)
+sh: sh.o $(ULIB)
+	ld -m elf_i386 -Ttext 0 -o sh sh.o $(ULIB)
+	./mk_ramdsk init.elf init.elf sh sh
+
 
 
 initcode:

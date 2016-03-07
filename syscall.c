@@ -33,7 +33,7 @@ fetchstr(uint32_t addr, char **pp)
 	}
  	*pp = (char*)addr;
  	ep = (char*)cp->sz;
-	kprintf("fetchstr: *pp",0);
+	//kprintf("fetchstr: *pp",0);
 	fb_write(*pp);
  	for(s = *pp; s < ep; s++)
 		if(*s == 0)
@@ -93,6 +93,8 @@ int syscall(void)
 	num = cp->tf->eax; // sys call number is stored here
 	if ( num > 0 && num < NELEM(syscalls) && syscalls[num] ) {
 		cp->tf->eax = syscalls[num]();
+		if(num == 1)
+			kprintf("syscall: eax: %d", cp->tf->eax);
 	} else {
 		kprintf("syscall: unhandled syscall.",0);
 		bbrk();

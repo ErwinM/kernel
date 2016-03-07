@@ -37,6 +37,11 @@ void trap(struct trapframe *tf)
 		kprintf("Errno: %d", tf->err);
 		PANIC("TRAP");
 	}
+
+
+	// this calls scheduler on timer interrupt
+	if(cp->state == RUNNING && tf->trapno == T_IRQ0 + IRQ_TIMER)
+		yield();
 }
 
 void spurious(uint32_t trapno)

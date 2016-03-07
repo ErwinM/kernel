@@ -75,8 +75,8 @@ void getinitrd(struct inode *ip)
 	hdr = getinitrdhdr(ip);
 	ip->size = hdr->sz;
 	ip->addrs[0] = hdr->offset;
-	kprintf("getinitrd: hdr->offset: %h",hdr->offset);
-	kprintf("getinitrd: ip->addrs: %h",*ip->addrs);
+	//kprintf("getinitrd: hdr->offset: %h",hdr->offset);
+	//kprintf("getinitrd: ip->addrs: %h",*ip->addrs);
 }
 
 struct rdbuf *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
@@ -106,12 +106,12 @@ struct rdbuf *readinitrd(struct inode *ip, uint32_t off, uint32_t n)
 		if((off + n) > ip->size)
 			PANIC("readinitrd: reading past end of file.");
 		offset = (uint32_t)sb + ip->addrs[0] + off;
-		kprintf("readinitrd: offset: %h", n);
+		//kprintf("readinitrd: offset: %h", n);
 		memmove(b->data, offset, n);
 		//b->data[n+1] = 0;
-		kprintf("readinitrd: data>>>",0);
-		fb_write(b->data);
-		fb_write("<<<<<");
+		//kprintf("readinitrd: data>>>",0);
+		//fb_write(b->data);
+		//fb_write("<<<<<");
 		return b;
 	}
 }

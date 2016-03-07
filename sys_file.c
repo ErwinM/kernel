@@ -39,6 +39,7 @@ int sys_write(void)
 		PANIC("sys_write: BAD arguments!");
 	return filewrite(f, p , n);
 	*/
+	return 0;
 }
 
 // Allocate a fd to a caller process in the ptable entry
@@ -109,11 +110,11 @@ int sys_exec(void)
 		}
 		if(fetchstr(uarg, &argv[i]) < 0)
 			PANIC("sys_exec: fetchstr");
-		kprintf("sys_exec: argv[i] %d >", i);
+		//kprintf("sys_exec: argv[i] %d >", i);
 		fb_write(argv[i]);
 	}
-	fb_write(">>>>>>>>");
-	fb_write(path);
-	fb_write("<<<<<<<<");
+	//fb_write(">>>>>>>>");
+	//fb_write(path);
+	//fb_write("<<<<<<<<");
 	return exec(path, argv);
 }

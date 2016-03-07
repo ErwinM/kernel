@@ -33,9 +33,14 @@ ASFLAGS = -f elf
 all: kernel.elf
 	#-nostdinc -I. -c
 
-init: init.o usys.o printf.o ulib.o
-	ld -m elf_i386 -Ttext 0 -o init.elf init.o usys.o printf.o ulib.o
+ULIB = ulib.o usys.o printf.o
+
+init: init.o $(ULIB)
+	ld -m elf_i386 -Ttext 0 -o init.elf init.o $(ULIB)
 	./mk_ramdsk init.elf init.elf erwin.txt erwin.txt
+
+_%: %.o $(ULIB)
+
 
 initcode:
 	nasm initcode.s -o initcode.out
@@ -43,7 +48,7 @@ initcode:
 	#objcopy -S -O binary initcode.out initcode
 
 
-kernel.elf: $(OBJECTS)
+kernel.elf: $(OBJECTS) initcode
 	ld -T link.ld -m elf_i386 -o kernel.elf $(OBJECTS) initcode.o
 
 mk_ramdsk: mk_ramdsk.c

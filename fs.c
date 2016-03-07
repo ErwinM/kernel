@@ -78,15 +78,17 @@ struct inode* dirlookup(struct inode *dp, char *name)
 	if (dp->type != T_DIR)
 		PANIC("dirlookup: inode not a dir");
 
-	kprintf("dirlookup: sizeof de: %d", sizeof(de));
+	//kprintf("dirlookup: sizeof de: %d", sizeof(de));
 	for(off = 0; off <= dp->size ; off +=sizeof(de) ) {
-		fb_write("testing");
+		//fb_write("testing");
 		if(readi(dp, &de, off, sizeof(de)) == -1)
 			PANIC("dirlookup: readi failed!");
 		if(strncmp(de.name, name, DIRSIZ) == 0) {
 			// match
 			inum = de.inum;
-			fb_write("dirlookup: found!");
+			fb_write("dirlookup: found, ");
+			fb_write(name);
+			fb_write("\n");
 			return iget(dp->dev, inum);
 		}
 	}

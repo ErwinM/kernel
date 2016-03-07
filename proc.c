@@ -74,7 +74,7 @@ void userinit(void)
     PANIC("userinit: out of memory?");
 
 	inituvm(p->pgdir, _binary_initcode_out_start, (int)_binary_initcode_out_size);
-	kprintf("userinit: initcode was linked at: %h", sip);
+	//kprintf("userinit: initcode was linked at: %h", sip);
   p->sz = PGSIZE;
   memset(p->tf, 0, sizeof(*p->tf));
   p->tf->cs = (SEG_UCODE << 3) | DPL_USER;
@@ -117,7 +117,7 @@ void scheduler(void)
 {
   struct proc *p;
 
-  for(;;){
+  for(;;){ // endless Loop
     // Enable interrupts on this processor.
     sti();
 		fb_write("scheduler: IRQ enabled.\n");
@@ -134,42 +134,27 @@ void scheduler(void)
 			fb_write("scheduler: switching context.\n");
       switchuvm(p);
       p->state = RUNNING;
-			fb_write("scheduler: switching process.\n");
+			kprintf("scheduler: switching to process: %d\n", p->pid);
       swtch(&mcpu->scheduler, cp->context);
 			fb_write("it doesnt get here...");
       switchkvm();
-
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       cp = 0;
     }
     //release(&ptable.lock);
-
   }
 }
 
+void yield(void)
+{
+	kprintf("%d: yielding...\n", cp->pid);
+	cp->state = RUNNABLE;
+	swtch(&cp->context, mcpu->scheduler); // this makes it continue in scheduler above after swtch() there...
+}
 
-/*
-algorithm fork
-input: none
-output: to parent process, child PID number
-to child process, 0
-check for available kernel resources;
-get free proc table slot, unique PID nurnber;
-check that user not running too many processes;
-mark child state "being created;"
-copy data from patent proc table slot to new child slot;
-increment counts on current directory Mode and changed root Of applicahle); incrernent open file counts in file table;
-make copy of patent context (u area, text, data, stack) in memory;
-push dummy system level context layer onto child system level context;
-dummy context contains data allowing child process to recognize itself, and start running from here when scheduled;
-if (executing process is patent process)
-change child state to "ready to run;"
-return(child ID); /* from system to user
-else /* executing process is the child process
-initialize u area timing fields; return(0); 1* to user */
 
-void fork()
+int fork()
 {
 	struct proc *np;
 	int k, pid;
@@ -194,6 +179,5 @@ void fork()
 	safestrcpy(np->name, cp->name, sizeof(cp->name));
 	pid = np->pid;
 	np->state = RUNNABLE;
-	kprintf("fork: complete.");
 	return pid;
 }

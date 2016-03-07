@@ -1,5 +1,6 @@
 // User space program
 #include "user.h"
+#include "common.h"
 
 void main()
 {
@@ -10,12 +11,17 @@ void main()
 
 	pid = fork();
 
-	if(pid < 0)
+	if(pid < 0) {
 		PANIC("init: fork call failed");
+	}
 
 	if(pid == 0) {
+		printf(0,"init: pid: %d", pid);
 		exec("sh", argv);
 		PANIC("init: exec call failed");
 	}
-	//printf(0,"Init: FINISHED!");
+	int i;
+	for(;;)
+		i++;
+	printf(0,"Init: FINISHED!");
 }

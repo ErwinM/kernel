@@ -69,7 +69,7 @@ uint32_t* walkpagedir(pte_t *pgdir, uint32_t vaddr)
 	uint32_t *pgtable;
 	pageinfo pginf = mm_virtaddrtopageindex(vaddr);
 	pgtable = (uint32_t*)((uint32_t)pgdir[pginf.pagetable] & 0xFFFFF000);
-	kprintf("walkpagedir: page: %h", pgtable[pginf.page]);
+	//kprintf("walkpagedir: page: %h", pgtable[pginf.page]);
 	return pgtable[pginf.page];
 }
 
@@ -140,7 +140,7 @@ void switchuvm(struct proc *p)
     PANIC("switchuvm: no pgdir");
 	kprintf("switchuvm: loading lcr3 with: %h..", p->pgdir);
   lcr3(p->pgdir);  // switch to new address space
-	kprintf("..loaded.",0);
+	kprintf("..loaded.\n",0);
   popcli();
 }
 
@@ -153,7 +153,7 @@ void inituvm(pte_t *pgdir, char *init, uint32_t sz)
   if(sz >= PGSIZE)
     PANIC("inituvm: more than a page");
   mem = kalloc();
-	kprintf("inituvm: got location: %h", init);
+	//kprintf("inituvm: got location: %h", init);
   memset(mem, 0, PGSIZE);
   mappage(pgdir, mem, 0, PTE_W|PTE_U);
   memmove(mem, init, sz);
@@ -170,7 +170,7 @@ pde_t copyuvm(uint32_t *pgdir, uint32_t sz)
 		PANIC("copyuvm: error on setupkvm");
 
 	for(k = 0; k < sz; k += PGSIZE){
-		kprintf("\ncopyuvm: address: %h", k);
+		//kprintf("\ncopyuvm: address: %h", k);
 		// error checking
 		if((pte = walkpagedir(pgdir, k)) == 0)
 			PANIC("copyuvm: no entry for pte");
@@ -179,7 +179,10 @@ pde_t copyuvm(uint32_t *pgdir, uint32_t sz)
 		// copy the pages themselves
 		if((mem = kalloc()) == 0)
 			PANIC("copyuvm: kalloc failed");
-		memmove(mem, (char*)pte, PGSIZE);
+		memmove(mem, (char*)PTE_ADDR(pte), PGSIZE);
+		kprintf("copyuvm: just copied from: %h", pte);
+		kprintf(" to: %h\n", mem);
+		bbrk();
 		// map them in the new pgdir
 		mappage(dir, mem, k, PTE_FLAGS(pte));
 	}
@@ -222,7 +225,7 @@ pte_t allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz)
 		mem = kalloc();
 		memset(mem, 0, PGSIZE);
 		mappage(pgdir, mem, (char*)k, PTE_U|PTE_W);
-		kprintf("allocuvm: mapped: %h", mem);
+		//kprintf("allocuvm: mapped: %h", mem);
 	}
 	return newsz;
 }

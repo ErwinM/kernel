@@ -2,8 +2,11 @@
 
 
 
-void sys_fork()
+int sys_fork()
 {
 	// no need to grab arguments because there are none
-	return fork();
+	int i;
+	i = fork();
+	kprintf("sys_fork: return: %d", i);
+	return i;
 }

@@ -32,15 +32,13 @@ int exec(char *path, char **argv)
 	for(k = 0, off = elf.phoff; k < elf.phnum; k++, off += sizeof(ph)){
 		if(readi(ip, (char*)&ph, off, sizeof(ph)) < sizeof(ph))
 			PANIC("exec: programhdrs corrupt");
-		kprintf("exec: ELF header found!\n", 0);
+		//kprintf("exec: ELF header found!\n", 0);
 		if(ph.type != ELF_PROG_LOAD)
 			continue;
 		sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz);
 		// int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint phoffset, uint sz)
 		loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz);
 	}
-	lcr3(pgdir);
-	bbrk();
 
 	// setup user stack .....
 	sz = PGROUNDUP(sz);

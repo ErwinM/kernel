@@ -25,6 +25,10 @@ void 				iinitrd(uint32_t);
 char* 			readinitrd(struct inode*, uint32_t, uint32_t);
 int * 			listinitrd(struct inode*, struct dirent*);
 int 				rdrelse(struct rdbuf*);
+// proc.c
+int					fork(void);
+
+
 // syscall.c
 int 				argint(uint32_t, uint32_t*);
 int					argptr(int, char**, int);

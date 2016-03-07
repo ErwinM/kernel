@@ -170,17 +170,18 @@ pde_t copyuvm(uint32_t *pgdir, uint32_t sz)
 		PANIC("copyuvm: error on setupkvm");
 
 	for(k = 0; k < sz; k += PGSIZE){
+		kprintf("\ncopyuvm: address: %h", k);
 		// error checking
 		if((pte = walkpagedir(pgdir, k)) == 0)
 			PANIC("copyuvm: no entry for pte");
-		if(!(*pte & PTE_P))
+		if(!((uint32_t)pte & PTE_P))
 			PANIC("copyuvm: page not present");
 		// copy the pages themselves
 		if((mem = kalloc()) == 0)
 			PANIC("copyuvm: kalloc failed");
-		memmove(mem, (char*)*pte, PGSIZE);
+		memmove(mem, (char*)pte, PGSIZE);
 		// map them in the new pgdir
-		mappage(dir, mem, PTE_ADDR(*pte), PTE_FLAGS(*pte));
+		mappage(dir, mem, k, PTE_FLAGS(pte));
 	}
 	return dir;
 }
@@ -193,8 +194,10 @@ int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint32_t phoffset, uint3
 	pte_t *pte;
 	char *pa;
 
-	if((uint32_t)addr%PGSIZE != 0)
+	if((uint32_t)addr%PGSIZE != 0) {
+		kprintf("loaduvm: addr: %h", addr);
 		PANIC("loaduvm: addr not page aligned");
+	}
 	for(va = 0; va < sz; va += PGSIZE){
 		pte = walkpagedir(pgdir, va);
 		pa = PTE_ADDR(pte);

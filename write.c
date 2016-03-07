@@ -56,9 +56,11 @@ void fb_put_char(char c)
 	uint16_t attribute = attributeByte << 8;
 	uint16_t *where;
 	// Handle backspace
-	if ( c == 0x08 )
+	if ( c == '\b' )
 	{
 		if ( cursor_x != 0 ) cursor_x--;
+		where = vidptr + (cursor_y * 80 + cursor_x);
+		*where = 0x20 | attribute;
 	// Handle a newline
 	} else if( c == '\n') {
 		cursor_x = 0;
@@ -73,6 +75,7 @@ void fb_put_char(char c)
 			cursor_x++;
 		}
 	}
+	fb_move_cursor();
 }
 
 void fb_move_cursor(void)
@@ -113,7 +116,6 @@ void fb_printf(char *buf, uint32_t n)
 		i++;
 		}
 	}
-	fb_move_cursor();
 }
 
 
@@ -125,7 +127,6 @@ void fb_write(char *buf)
 		fb_put_char(buf[i]);
 		i++;
 	}
-	fb_move_cursor();
 }
 
 void fb_write_dec(uint32_t n)

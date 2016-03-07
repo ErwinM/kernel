@@ -35,11 +35,11 @@ static struct proc* allocproc()
 	struct proc *p;
 	char *sp;
 
-	for (p = ptable.proc ; p < &ptable.proc[64] ; p++ )
-	{
-		if(p->state == UNUSED)
+	for (p = ptable.proc ; p < &ptable.proc[64] ; p++ ){
+		if(p->state == UNUSED) {
 			goto found;
 			return 0;
+		}
 	}
 found:
 	p->state = EMBRYO;
@@ -194,5 +194,6 @@ void fork()
 	safestrcpy(np->name, cp->name, sizeof(cp->name));
 	pid = np->pid;
 	np->state = RUNNABLE;
+	kprintf("fork: complete.");
 	return pid;
 }

@@ -50,7 +50,6 @@ idt_flush:
 %macro ISR_NOERRORCODE 1
 global isr%1
 isr%1:
-	cli
 	push byte 0		; push a dummy error code
 	push byte %1		; push the interrup number
 	jmp alltraps
@@ -59,7 +58,6 @@ isr%1:
 %macro ISR_WITHERRORCODE 1
 global isr%1
 isr%1:
-	cli
 	push byte %1		; only push interrupt number, error code has already been pushed
 	jmp alltraps
 %endmacro
@@ -69,7 +67,6 @@ isr%1:
 %macro IRQ 2
 global irq%1
 irq%1:
-	cli
 	push byte 0
 	push byte %2
 	jmp alltraps

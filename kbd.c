@@ -5,14 +5,8 @@
 void kbdgetc(void)
 {
 
-}
-
-void consoleintr(void)
-{
-	int i;
-
-	i = inb(KBSTATUS);
-
-	kprintf("consoleintr: %h", i);
-	sti();
+	/*	sc=inb(KBDATAP);
+		if((sc & (1 << 7)) == 0)
+			c = normalmap[sc];
+			fb_put_char(c);*/
 }

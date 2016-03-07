@@ -78,11 +78,13 @@ argstr(int n, char **pp)
 // the actual sys call functions are found in sys_file, sys_proc and exec
 extern int sys_write(void);
 extern int sys_exec(void);
+extern int sys_fork(void);
 
 // Syscall table
 static int (*syscalls[])(void) = {
 [SYS_write]   sys_write,
-[SYS_exec]		sys_exec
+[SYS_exec]		sys_exec,
+[SYS_fork]		sys_fork
 };
 
 int syscall(void)

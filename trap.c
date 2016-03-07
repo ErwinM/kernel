@@ -7,9 +7,10 @@ extern struct proc *cp;
 
 void trap(struct trapframe *tf)
 {
-	//kprintf("Trapno: %d", tf->trapno);
+	if(tf->trapno != 32)
+		//kprintf("Trapno: %d", tf->trapno);
 	if(tf->trapno == T_SYSCALL){
-		kprintf("trap: SYSCALL: %d\n", tf->eax);
+		//kprintf("trap: SYSCALL: %d\n", tf->eax);
 		cp->tf = tf;
 		syscall();
 		return;
@@ -30,7 +31,7 @@ void trap(struct trapframe *tf)
 		//spurious(tf->trapno);
 		consoleintr();
 		EOI(tf->trapno);
-		break;
+		return;
 	default:
 		kprintf("Unhandled trapno: %d.\n", tf->trapno);
 		kprintf("Errno: %d", tf->err);
@@ -54,7 +55,8 @@ void EOI(uint32_t trapno)
 			outb(0xA0, 0x20);
 	}
 	// Any IRQ, send EOI to master
-	if (trapno >= 32){
+	if (1){//trapno >= 32){
+		if(trapno !=32)
 		outb(0x20, 0x20);
 	}
 }

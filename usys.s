@@ -30,3 +30,5 @@ global %1
 %endmacro
 
 SYSCALL write
+SYSCALL fork
+SYSCALL exec

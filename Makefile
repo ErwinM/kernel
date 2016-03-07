@@ -19,6 +19,9 @@ OBJECTS = \
 	sys_file.o\
 	exec.o\
 	kbd.o\
+	pic.o\
+	sysproc.o\
+	console.o\
 
 CC = gcc
 CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
@@ -30,8 +33,9 @@ ASFLAGS = -f elf
 all: kernel.elf
 	#-nostdinc -I. -c
 
-init: init.o usys.o printf.o
-	ld -m elf_i386 -Ttext 0 -o init.elf init.o usys.o printf.o
+init: init.o usys.o printf.o ulib.o
+	ld -m elf_i386 -Ttext 0 -o init.elf init.o usys.o printf.o ulib.o
+	./mk_ramdsk init.elf init.elf erwin.txt erwin.txt
 
 initcode:
 	nasm initcode.s -o initcode.out

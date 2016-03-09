@@ -40,7 +40,7 @@ init: init.o $(ULIB)
 	./mk_ramdsk init.elf init.elf sh sh
 
 sh: sh.o $(ULIB)
-	ld -m elf_i386 -Ttext 0 -o sh sh.o $(ULIB)
+	ld -T ulink.ld -m elf_i386 -Ttext 0 -o sh sh.o $(ULIB)
 	./mk_ramdsk init.elf init.elf sh sh
 
 
@@ -82,4 +82,4 @@ run: os.iso
 	$(AS) $(ASFLAGS) $< -o $@
 
 clean:
-	rm -rf *.o kernel.elf os.iso initcode initcode.out init.elf
+	rm -rf *.o kernel.elf os.iso initcode initcode.out

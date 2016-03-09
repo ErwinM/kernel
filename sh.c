@@ -1,14 +1,29 @@
 // User space program: sh shell
 
+	char *title = "ErwinOS shell loaded.\n";
+
 void main()
 {
-	char *buf[64];
+	char *cmd[64];
 	int n;
 
-	printf(0,"ErwinOS shell loaded.\n");
+
+
+	printf(0,"%s", title);
 	printf(0,"ErwinOS:/ $ ");
 
-	n = read(0, buf, 100);
-	printf(0, "got: %s", buf);
+	n = read(0, cmd, 64);
+	printf(0, "got: %s", cmd);
 	printf(0, "len: %d", n);
 }
+
+void parseline(char *line)
+{
+	char s;
+	s = strchr(line);
+
+
+}
+
+
+// NEED MALLOC!

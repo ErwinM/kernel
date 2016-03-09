@@ -194,12 +194,14 @@ int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint32_t phoffset, uint3
 	pte_t *pte;
 	char *pa;
 
+	kprintf("loaduvm: addr: %h", addr);
+
 	if((uint32_t)addr%PGSIZE != 0) {
 		kprintf("loaduvm: addr: %h", addr);
 		PANIC("loaduvm: addr not page aligned");
 	}
 	for(va = 0; va < sz; va += PGSIZE){
-		pte = walkpagedir(pgdir, va);
+		pte = walkpagedir(pgdir, addr + va);
 		pa = PTE_ADDR(pte);
 		kprintf("loaduvm: pa: %h", pa);
 		if(sz-va < PGSIZE)

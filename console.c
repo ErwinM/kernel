@@ -27,6 +27,7 @@ void consoleint(void)
 	case 255:
 		return;
 	case '\n':
+		clist.buf[clist.wi++] = '\n';
 		kprintf("WAKEUP",0);
 		wakeup(&clist.wi);
 		break;

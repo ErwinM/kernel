@@ -80,13 +80,15 @@ extern int sys_write(void);
 extern int sys_read();
 extern int sys_exec(void);
 extern int sys_fork(void);
+extern int sys_sbrk(void);
 
 // Syscall table
 static int (*syscalls[])(void) = {
 [SYS_write]   sys_write,
 [SYS_exec]		sys_exec,
 [SYS_fork]		sys_fork,
-[SYS_read]		sys_read
+[SYS_read]		sys_read,
+[SYS_sbrk]		sys_sbrk
 };
 
 int syscall(void)

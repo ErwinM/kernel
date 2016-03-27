@@ -16,14 +16,33 @@ extern void panic(const char *message, const char *file, int line)
 		asm volatile("xchg %bx, %bx");
 }
 
-char *strchr(char *str, char c)
+void* memmove(void *dst, const void *src, unsigned int n)
 {
-	char *s;
+  const char *s;
+  char *d;
 
-	for(s = str; s < strlen(str); s++)
-		if(*s = c)
-			break;
-	return s;
+  s = src;
+  d = dst;
+  if(s < d && s + n > d){
+    s += n;
+    d += n;
+    while(n-- > 0)
+      *--d = *--s;
+  } else
+    while(n-- > 0)
+      *d++ = *s++;
+
+  return dst;
+}
+
+char* strchr(const char *s, char c)
+{
+	printf(0, "strchr: s is %s", s);
+  for(; *s; s++)
+    if(*s == c) {
+      return (char*)s;
+		}
+  return 0;
 }
 
 int strlen(char *s)
@@ -39,6 +58,7 @@ char* gets(char *buf, int max)
 	int n, i;
 
 	n = read(0, buf, max);
+	printf(0,"gets: read returned: %d", n);
 	for(i = 0; i <=n; i++)
 		if(buf[i] = '\n')
 			break;

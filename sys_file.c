@@ -33,8 +33,8 @@ int sys_write(void)
 	struct file *f;
 	char *p;
 
-	n = argptr(1, &p, 8);
-	fb_write(p);
+	n = argptr(1, &p, 1);
+	fb_put_char(*p);
 	//fb_write(p);
 	/*
 	if ( argfd(0,0,f) < 0 || argint(2, &n) || argptr(1, &p, n) )

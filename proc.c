@@ -27,6 +27,7 @@ struct cpu *mcpu = &maincpu;
 void initptable()
 {
 	initlock(&ptable.lock, "ptable");
+	kprintf("\nInitializing process table. Loc: %x", &ptable.proc);
 }
 
 static struct proc* allocproc()
@@ -147,7 +148,7 @@ void scheduler(void)
   }
 }
 
-void sched()
+void sched(void)
 {
 	if(!holding(&ptable.lock))
 		PANIC("sched: not holding ptable lock");
@@ -221,6 +222,74 @@ void wakeup(void *chan)
 		}
 	}
 	release(&ptable.lock);
+}
+
+
+// Exit the current process.  Does not return.
+// An exited process remains in the zombie state
+// until its parent calls wait() to find out it exited.
+int exit(void)
+{
+	struct proc *pp;
+
+	acquire(&ptable.lock);
+	cp->state = ZOMBIE;
+	release(&ptable.lock);
+	if((pp = cp->parent) == 0)
+		PANIC("exit: parent not found!");
+
+	// TODO: check if this process has children that are about to be orphaned
+
+	wakeup(pp);
+	acquire(&ptable.lock);
+	sched();
+}
+
+
+// Wait for a child process to exit and return its pid.
+// Return -1 if this process has no children.
+int wait(void)
+{
+	struct proc *p;
+	int haschild, pid;
+
+	acquire(&ptable.lock);
+	for(;;){
+		haschild = 0;
+		for(p = ptable.proc; p < &ptable.proc[NPROC]; p++ ){
+			if(p->parent == cp){
+				haschild = 1;
+				if(p->state == ZOMBIE){
+					pid = p->pid;
+					p->state = UNUSED;
+					//release(&ptable.lock);
+					return pid;
+					//TODO: proper clear ptable and clear memory!
+				}
+			}
+		}
+		if(haschild == 0){
+			release(&ptable.lock);
+			PANIC("wait: no child!");
+			return -1;
+		}
+		// wait for child to exit; sleep on parent
+		sleep(cp, &ptable.lock);
+	}
+	PANIC("wait: returning!")
+}
+
+
+
+
+int growproc(int sz)
+{
+	int nsz;
+
+	nsz = cp->sz + sz;
+	allocuvm(cp->pgdir, cp->sz, nsz);
+	cp->sz = nsz;
+	switchuvm(cp);
 }
 
 void procdump(void)

@@ -14,6 +14,11 @@ struct {
 	uint32_t wi; // write index
 } clist;
 
+void initconsole(void)
+{
+	initlock(&clist.lock, "clist");
+}
+
 void consoleint(void)
 {
 	uint8_t c;
@@ -27,19 +32,19 @@ void consoleint(void)
 	case 255:
 		return;
 	case '\n':
-		clist.buf[clist.wi++] = '\n';
+		//clist.buf[clist.wi++] = '\n';
 		kprintf("WAKEUP",0);
 		wakeup(&clist.wi);
 		break;
 	default:
 		fb_put_char(c);
-	}
-	if(clist.wi == 128)
-		PANIC("consoleint: buffer is full!");
-	if(c == '\b'){
-		clist.buf[clist.wi--] = 0;
-	} else {
-		clist.buf[clist.wi++] = c;
+		if(clist.wi == 128)
+			PANIC("consoleint: buffer is full!");
+		if(c == '\b'){
+			clist.buf[clist.wi--] = 0;
+		} else {
+			clist.buf[clist.wi++] = c;
+		}
 	}
 }
 
@@ -47,20 +52,27 @@ int consoleread(struct inode *ip, char *dst, uint32_t n)
 {
 	int len;
 
+	clist.ri = clist.wi = 0;
+
+	kprintf("\nconsoleread: loc of clist.buf: %h", &clist.buf);
+	kprintf("\nconsoleread: loc of clist.loc: %h", &clist.lock);
+
 	acquire(&clist.lock);
 	while(n > 0){
 		while(clist.ri == clist.wi){
 			sleep(&clist.wi, &clist.lock); // wait for something to arrive in buffer
 		}
-		for(clist.ri = 0; clist.ri<=clist.wi;){
+		for(clist.ri = 0; clist.ri<clist.wi;){
 			*dst++ = clist.buf[clist.ri++];
 		}
 		n = 0; // enter always ends the console read
 	}
+	release(&clist.lock);
 	*dst++ = 0;
 	len = clist.ri;
 	clist.ri = clist.wi = 0;
-	return len+1;
+	kprintf("\nconsoleread: %d", len);
+	return len;
 }
 
 static void
@@ -97,9 +109,9 @@ kprintf(char *fmt, ...)
   uint32_t *argp;
   char *s;
 
-  locking = cons.locking;
-  if(locking)
-    acquire(&cons.lock);
+  //locking = cons.locking;
+  //if(locking)
+  //  acquire(&cons.lock);
 
   if (fmt == 0)
     PANIC("null fmt");
@@ -139,6 +151,6 @@ kprintf(char *fmt, ...)
     }
   }
 
-  if(locking)
-    release(&cons.lock);
+  //if(locking)
+  //  release(&cons.lock);
 }

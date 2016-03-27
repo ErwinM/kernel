@@ -35,11 +35,16 @@ int kmain(struct multiboot *mboot_ptr)
 	initpaging();
 	initkheap(); // Create the kernel heap; without it you get stuck quickly
 	iinitrd(initrd); // initialise ramdsk
+	initconsole();
+	initptable();
 
 	struct inode *root;
 	struct file *fd;
 	struct dirent dd[10];
 	char *data[512];
+
+	kprintf("kmain: writing: %h", 0x5000);
+	kprintf("kmain: and then still writing",0);
 
 	userinit();
 	scheduler();

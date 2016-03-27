@@ -4,6 +4,7 @@
 
 extern struct cpu *mcpu;
 
+
 void initlock(struct spinlock *lk, char *name)
 {
 	lk->locked = 0;
@@ -13,8 +14,10 @@ void initlock(struct spinlock *lk, char *name)
 void acquire(struct spinlock *lk)
 {
 	pushcli();
-	if(lk->locked)
+	if(lk->locked){
+		kprintf("acquire: %s", lk->name);
 		PANIC("acquire");
+	}
 	lk->locked = 1;
 }
 

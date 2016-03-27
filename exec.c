@@ -36,13 +36,14 @@ int exec(char *path, char **argv)
 		if(ph.type != ELF_PROG_LOAD)
 			continue;
 		sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz);
+		kprintf("exec: sz is: %h", sz);
 		// int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint phoffset, uint sz)
 		loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz);
 	}
 
 	// setup user stack .....
 	sz = PGROUNDUP(sz);
-	if((sz = allocuvm(pgdir, sz, 2*PGSIZE)) < 2*PGSIZE)
+	if((sz = allocuvm(pgdir, sz, sz + 2*PGSIZE)) < 2*PGSIZE)
 		PANIC("exec: setup stack");
 	sp = sz;
 

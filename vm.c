@@ -214,17 +214,19 @@ int loaduvm(pde_t *pgdir, char *addr, struct inode *ip, uint32_t phoffset, uint3
 	return 0;
 }
 
-pte_t allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz)
+int allocuvm(pde_t *pgdir, uint32_t oldsz, uint32_t newsz)
 {
 	uint32_t k;
 	char *mem;
 
+	kprintf("allocuvm: old: %x to new: %x",oldsz,newsz);
 	k = PGROUNDUP(oldsz);
 	for(; k < newsz; k+= PGSIZE){
 		mem = kalloc();
 		memset(mem, 0, PGSIZE);
+		kprintf("allocuvm: mapped va: %x to pa: %x ", k,mem);
 		mappage(pgdir, mem, (char*)k, PTE_U|PTE_W);
-		//kprintf("allocuvm: mapped: %h", mem);
+
 	}
 	return newsz;
 }

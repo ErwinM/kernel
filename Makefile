@@ -33,17 +33,19 @@ ASFLAGS = -f elf
 all: kernel.elf
 	#-nostdinc -I. -c
 
-ULIB = ulib.o usys.o printf.o
+ULIB = ulib.o usys.o printf.o umalloc2.o
 
 init: init.o $(ULIB)
-	ld -m elf_i386 -Ttext 0 -o init.elf init.o $(ULIB)
-	./mk_ramdsk init.elf init.elf sh sh
+	ld -T ulink.ld -m elf_i386 -Ttext 0 -o init.elf init.o $(ULIB)
+	./mk_ramdsk init.elf init.elf sh sh ls ls
 
 sh: sh.o $(ULIB)
 	ld -T ulink.ld -m elf_i386 -Ttext 0 -o sh sh.o $(ULIB)
-	./mk_ramdsk init.elf init.elf sh sh
+	./mk_ramdsk init.elf init.elf sh sh ls ls
 
-
+ls: ls.o $(ULIB)
+	ld -T ulink.ld -m elf_i386 -Ttext 0 -o ls ls.o $(ULIB)
+	./mk_ramdsk init.elf init.elf sh sh ls ls
 
 initcode:
 	nasm initcode.s -o initcode.out

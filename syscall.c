@@ -28,7 +28,7 @@ fetchstr(uint32_t addr, char **pp)
 	//kprintf("fetchstr: addr: %h", addr);
 	//kprintf("fetchstr: cp->sz: %h", cp->sz);
  	if(addr >= cp->sz) {
-		PANIC("fetchstr cp-sz");
+		PANIC("fetchstr: addr > cp->sz");
 		return -1;
 	}
  	*pp = (char*)addr;
@@ -81,6 +81,8 @@ extern int sys_read();
 extern int sys_exec(void);
 extern int sys_fork(void);
 extern int sys_sbrk(void);
+extern int sys_wait(void);
+extern int sys_exit(void);
 
 // Syscall table
 static int (*syscalls[])(void) = {
@@ -88,7 +90,9 @@ static int (*syscalls[])(void) = {
 [SYS_exec]		sys_exec,
 [SYS_fork]		sys_fork,
 [SYS_read]		sys_read,
-[SYS_sbrk]		sys_sbrk
+[SYS_sbrk]		sys_sbrk,
+[SYS_wait]		sys_wait,
+[SYS_exit]		sys_exit
 };
 
 int syscall(void)
